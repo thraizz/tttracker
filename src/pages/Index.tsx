@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Trophy, Users } from "lucide-react";
@@ -10,6 +10,71 @@ const Index = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentTournament, setCurrentTournament] = useState<Tournament | null>(null);
   const [view, setView] = useState<'setup' | 'tournament'>('setup');
+
+  // Save data to localStorage
+  const saveToLocalStorage = (key: string, data: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Failed to save to localStorage:', error);
+    }
+  };
+
+  // Load data from localStorage
+  const loadFromLocalStorage = (key: string) => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Convert date strings back to Date objects
+        if (key === 'currentTournament' && parsed) {
+          if (parsed.createdAt) parsed.createdAt = new Date(parsed.createdAt);
+          if (parsed.completedAt) parsed.completedAt = new Date(parsed.completedAt);
+          if (parsed.matches) {
+            parsed.matches.forEach((match: any) => {
+              if (match.completedAt) match.completedAt = new Date(match.completedAt);
+            });
+          }
+        }
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Failed to load from localStorage:', error);
+    }
+    return null;
+  };
+
+  // Load initial data on component mount
+  useEffect(() => {
+    const savedPlayers = loadFromLocalStorage('players');
+    const savedTournament = loadFromLocalStorage('currentTournament');
+    const savedView = loadFromLocalStorage('view');
+
+    if (savedPlayers) {
+      setPlayers(savedPlayers);
+    }
+    if (savedTournament) {
+      setCurrentTournament(savedTournament);
+    }
+    if (savedView && (savedView === 'setup' || savedView === 'tournament')) {
+      setView(savedView);
+    }
+  }, []);
+
+  // Save players to localStorage whenever they change
+  useEffect(() => {
+    saveToLocalStorage('players', players);
+  }, [players]);
+
+  // Save tournament to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage('currentTournament', currentTournament);
+  }, [currentTournament]);
+
+  // Save view to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage('view', view);
+  }, [view]);
 
   const startTournament = () => {
     if (players.length < 2) return;
@@ -74,6 +139,9 @@ const Index = () => {
   const resetTournament = () => {
     setCurrentTournament(null);
     setView('setup');
+    // Clear tournament from localStorage but keep players
+    localStorage.removeItem('currentTournament');
+    saveToLocalStorage('view', 'setup');
   };
 
   if (view === 'tournament' && currentTournament) {
