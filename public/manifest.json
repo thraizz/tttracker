@@ -1,0 +1,46 @@
+{
+  "name": "Ping Pong Pal - Tournament Bracket Manager",
+  "short_name": "Ping Pong Pal",
+  "description": "Create and manage ping pong tournaments with ease. Track matches, manage players, and crown champions in your friend group!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#22c55e",
+  "orientation": "portrait-primary",
+  "categories": ["sports", "games", "productivity"],
+  "icons": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/placeholder.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "1280x800",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Tournament Setup Screen"
+    },
+    {
+      "src": "/placeholder.svg", 
+      "sizes": "750x1334",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Tournament Bracket View"
+    }
+  ]
+}

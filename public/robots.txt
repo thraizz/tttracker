@@ -1,3 +1,6 @@
+# Ping Pong Pal - Tournament Bracket Manager
+# Welcome to all search engines and social media crawlers!
+
 User-agent: Googlebot
 Allow: /
 
@@ -12,3 +15,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+# Sitemap location
+Sitemap: https://ping-pong-pal.com/sitemap.xml
