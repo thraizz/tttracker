@@ -119,3 +119,27 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* React Flow styles for tournament bracket */
+.react-flow__node {
+  font-size: 12px;
+}
+
+.react-flow__node-default {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__handle {
+  background-color: transparent;
+  border: none;
+}
+
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.react-flow__attribution {
+  font-size: 10px;
+  opacity: 0.5;
+}

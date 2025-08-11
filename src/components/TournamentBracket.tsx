@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Trophy, Crown, Users, Clock } from "lucide-react";
 import { Tournament, Match, Player } from "@/types/tournament";
 import MatchCard from "@/components/MatchCard";
+import TournamentGraph from "@/components/TournamentGraph";
 
 interface TournamentBracketProps {
   tournament: Tournament;
@@ -32,13 +33,34 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
       return match;
     });
 
+    // Advance winner to next round
+    const currentMatch = tournament.matches.find(m => m.id === matchId);
+    if (currentMatch) {
+      const currentRound = currentMatch.round;
+      const nextRound = currentRound + 1;
+      const matchIndexInRound = parseInt(currentMatch.id.split('-match-')[1]);
+      const nextMatchIndex = Math.floor(matchIndexInRound / 2);
+      const nextMatchId = `round-${nextRound}-match-${nextMatchIndex}`;
+      
+      // Update next round match with winner
+      updatedMatches.forEach(match => {
+        if (match.id === nextMatchId) {
+          if (matchIndexInRound % 2 === 0) {
+            match.player1 = winner;
+          } else {
+            match.player2 = winner;
+          }
+        }
+      });
+    }
+
     // Update player stats
     const updatedPlayers = tournament.players.map(player => {
-      if (player.id === winner.id) {
+      if (player.id === winner.id && player.id !== 'bye') {
         return { ...player, wins: player.wins + 1 };
       }
       const match = tournament.matches.find(m => m.id === matchId);
-      if (match && (player.id === match.player1.id || player.id === match.player2.id) && player.id !== winner.id) {
+      if (match && (player.id === match.player1.id || player.id === match.player2.id) && player.id !== winner.id && player.id !== 'bye') {
         return { ...player, losses: player.losses + 1 };
       }
       return player;
@@ -109,6 +131,11 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
             <Users className="w-4 h-4" />
             <span>{tournament.players.length} players</span>
           </div>
+        </div>
+
+        {/* Tournament Graph */}
+        <div className="mb-8">
+          <TournamentGraph matches={tournament.matches} players={tournament.players} />
         </div>
 
         {/* Tournament Winner */}
