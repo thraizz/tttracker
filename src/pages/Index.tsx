@@ -12,7 +12,7 @@ const Index = () => {
   const [view, setView] = useState<'setup' | 'tournament'>('setup');
 
   // Save data to localStorage
-  const saveToLocalStorage = (key: string, data: any) => {
+  const saveToLocalStorage = (key: string, data: unknown) => {
     try {
       localStorage.setItem(key, JSON.stringify(data));
     } catch (error) {
@@ -31,7 +31,7 @@ const Index = () => {
           if (parsed.createdAt) parsed.createdAt = new Date(parsed.createdAt);
           if (parsed.completedAt) parsed.completedAt = new Date(parsed.completedAt);
           if (parsed.matches) {
-            parsed.matches.forEach((match: any) => {
+            parsed.matches.forEach((match: Match) => {
               if (match.completedAt) match.completedAt = new Date(match.completedAt);
             });
           }
@@ -82,16 +82,17 @@ const Index = () => {
 
   const startTournament = () => {
     if (players.length < 2) return;
-    
+
     const matches = generateMatches(players);
     const tournament: Tournament = {
       id: Date.now().toString(),
       players,
       matches,
       status: 'active',
-      createdAt: new Date()
+      createdAt: new Date(),
+      currentView: 'graph'
     };
-    
+
     setCurrentTournament(tournament);
     setView('tournament');
   };
@@ -99,11 +100,11 @@ const Index = () => {
   const generateMatches = (players: Player[]): Match[] => {
     const matches: Match[] = [];
     const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
-    
+
     // Create single elimination bracket
     let currentRound = 1;
     let roundPlayers = [...shuffledPlayers];
-    
+
     // Add bye players if odd number
     if (roundPlayers.length % 2 === 1) {
       roundPlayers.push({
@@ -113,11 +114,11 @@ const Index = () => {
         losses: 0
       });
     }
-    
+
     // Generate bracket rounds
     while (roundPlayers.length > 1) {
       const roundMatches: Match[] = [];
-      
+
       for (let i = 0; i < roundPlayers.length; i += 2) {
         if (i + 1 < roundPlayers.length) {
           roundMatches.push({
@@ -129,14 +130,14 @@ const Index = () => {
           });
         }
       }
-      
+
       matches.push(...roundMatches);
-      
+
       // Prepare for next round (winners will be determined during play)
       roundPlayers = new Array(Math.ceil(roundPlayers.length / 2)).fill(null);
       currentRound++;
     }
-    
+
     return matches;
   };
 
@@ -147,7 +148,7 @@ const Index = () => {
 
   if (view === 'tournament' && currentTournament) {
     return (
-      <TournamentBracket 
+      <TournamentBracket
         tournament={currentTournament}
         onUpdateTournament={setCurrentTournament}
         onReset={resetTournament}
@@ -184,7 +185,7 @@ const Index = () => {
                 {players.length} registered
               </div>
             </div>
-            
+
             <PlayerManagement players={players} onUpdatePlayers={setPlayers} />
           </Card>
 
@@ -197,7 +198,7 @@ const Index = () => {
                 <p className="text-muted-foreground mb-6">
                   {players.length} players registered. Let the tournament begin!
                 </p>
-                <Button 
+                <Button
                   onClick={startTournament}
                   size="lg"
                   className="bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold px-8"
