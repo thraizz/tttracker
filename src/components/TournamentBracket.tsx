@@ -18,7 +18,7 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [scorePlayer1, setScorePlayer1] = useState("");
   const [scorePlayer2, setScorePlayer2] = useState("");
-  const [currentView, setCurrentView] = useState<'graph' | 'matches'>(tournament.currentView || 'graph');
+  const [currentView, setCurrentView] = useState<'next-match' | 'pending-matches'>(tournament.currentView || 'next-match');
 
   // Find the next available match to be played
   const getNextMatch = (): Match | null => {
@@ -90,7 +90,7 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
       status: completedMatches === totalMatches ? 'completed' as const : 'active' as const,
       winner: completedMatches === totalMatches ? getOverallWinner(updatedPlayers) : undefined,
       completedAt: completedMatches === totalMatches ? new Date() : undefined,
-      currentView: completedMatches === totalMatches ? 'matches' as const : 'graph' as const
+      currentView: completedMatches === totalMatches ? 'pending-matches' as const : 'next-match' as const
     };
 
     onUpdateTournament(updatedTournament);
@@ -98,9 +98,9 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
     setScorePlayer1("");
     setScorePlayer2("");
 
-    // Switch to graph view after completing a match (unless tournament is complete)
+    // Switch to next-match view after completing a match (unless tournament is complete)
     if (completedMatches < totalMatches) {
-      setCurrentView('graph');
+      setCurrentView('next-match');
     }
   };
 
@@ -128,8 +128,8 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
   const completedMatches = tournament.matches.filter(m => m.status === 'completed');
   const nextMatch = getNextMatch();
 
-  // Show graph view with next match info and proceed button
-  if (currentView === 'graph' && tournament.status === 'active' && nextMatch) {
+  // Show next match view with graph and next match info
+  if (currentView === 'next-match' && tournament.status === 'active' && nextMatch) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-soft-gray to-background">
         <div className="container max-w-6xl mx-auto py-8 px-4">
@@ -169,10 +169,10 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
             <TournamentGraph matches={tournament.matches} players={tournament.players} />
           </div>
 
-          {/* Proceed Button */}
-          <div className="text-center">
+          {/* Navigation Buttons */}
+          <div className="text-center space-x-4">
             <Button
-              onClick={() => setCurrentView('matches')}
+              onClick={() => setCurrentView('pending-matches')}
               size="lg"
               className="bg-gradient-to-r from-ping-pong to-table-green hover:from-ping-pong/90 hover:to-table-green/90 text-white font-semibold px-8"
             >
@@ -211,21 +211,16 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
           </div>
         </div>
 
-        {/* Tournament Graph */}
-        <div className="mb-8">
-          <TournamentGraph matches={tournament.matches} players={tournament.players} />
-        </div>
-
-        {/* View Tournament Graph Button */}
+        {/* View Navigation */}
         {tournament.status === 'active' && nextMatch && (
           <div className="mb-8 text-center">
             <Button
               variant="outline"
-              onClick={() => setCurrentView('graph')}
+              onClick={() => setCurrentView('next-match')}
               className="border-ping-pong/30 text-ping-pong hover:bg-ping-pong/10"
             >
               <Trophy className="w-4 h-4 mr-2" />
-              View Tournament Graph
+              View Next Match & Tournament Graph
             </Button>
           </div>
         )}

@@ -28,5 +28,5 @@ export interface Tournament {
   winner?: Player;
   createdAt: Date;
   completedAt?: Date;
-  currentView?: 'graph' | 'matches';
+  currentView?: 'next-match' | 'pending-matches';
 }

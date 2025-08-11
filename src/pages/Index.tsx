@@ -90,7 +90,7 @@ const Index = () => {
       matches,
       status: 'active',
       createdAt: new Date(),
-      currentView: 'graph'
+      currentView: 'next-match'
     };
 
     setCurrentTournament(tournament);
