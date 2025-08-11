@@ -61,7 +61,12 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Ping pong theme colors
+				'ping-pong': 'hsl(var(--ping-pong-orange))',
+				'table-green': 'hsl(var(--table-green))',
+				'victory-gold': 'hsl(var(--victory-gold))',
+				'soft-gray': 'hsl(var(--soft-gray))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
