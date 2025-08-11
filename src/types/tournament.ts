@@ -8,8 +8,8 @@ export interface Player {
 
 export interface Match {
   id: string;
-  player1: Player;
-  player2: Player;
+  player1: Player | null;
+  player2: Player | null;
   winner?: Player;
   score?: {
     player1Score: number;

@@ -66,11 +66,11 @@ const TournamentGraph = ({ matches, players }: TournamentGraphProps) => {
               <div className="text-center p-2">
                 <div className="text-xs text-muted-foreground mb-1">Round {round}</div>
                 <div className="font-medium text-sm mb-1">
-                  {match.player1.name}
+                  {match.player1?.name || 'TBD'}
                 </div>
                 <div className="text-xs text-muted-foreground">vs</div>
                 <div className="font-medium text-sm mb-1">
-                  {match.player2.name}
+                  {match.player2?.name || 'TBD'}
                 </div>
                 {match.status === 'completed' && match.score && (
                   <Badge variant="secondary" className="text-xs">
@@ -82,7 +82,7 @@ const TournamentGraph = ({ matches, players }: TournamentGraphProps) => {
                 )}
                 {match.winner && (
                   <div className="text-xs text-table-green mt-1">
-                    Winner: {match.winner.name}
+                    Winner: {match.winner?.name || 'TBD'}
                   </div>
                 )}
               </div>
@@ -193,7 +193,7 @@ const TournamentGraph = ({ matches, players }: TournamentGraphProps) => {
         <h2 className="text-xl font-semibold">Tournament Bracket</h2>
         <Badge variant="secondary">{matches.length} matches</Badge>
       </div>
-      
+
       <div className="h-96 w-full border rounded-lg overflow-hidden">
         <ReactFlow
           nodes={nodes}
