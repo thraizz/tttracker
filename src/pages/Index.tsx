@@ -68,7 +68,11 @@ const Index = () => {
 
   // Save tournament to localStorage whenever it changes
   useEffect(() => {
-    saveToLocalStorage('currentTournament', currentTournament);
+    if (currentTournament) {
+      saveToLocalStorage('currentTournament', currentTournament);
+    } else {
+      localStorage.removeItem('currentTournament');
+    }
   }, [currentTournament]);
 
   // Save view to localStorage whenever it changes
@@ -139,9 +143,6 @@ const Index = () => {
   const resetTournament = () => {
     setCurrentTournament(null);
     setView('setup');
-    // Clear tournament from localStorage but keep players
-    localStorage.removeItem('currentTournament');
-    saveToLocalStorage('view', 'setup');
   };
 
   if (view === 'tournament' && currentTournament) {
