@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,6 +34,7 @@ export const MatchRecordModal = ({
   const [scorePlayer1, setScorePlayer1] = useState("");
   const [scorePlayer2, setScorePlayer2] = useState("");
   const [recording, setRecording] = useState(false);
+  const [showSkunkedAnimation, setShowSkunkedAnimation] = useState(false);
 
   const calculateEloChange = (ratingA: number, ratingB: number, result: number, kFactor = 32) => {
     const expectedA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
@@ -41,11 +42,31 @@ export const MatchRecordModal = ({
     return change;
   };
 
+  const checkForSkunkedScore = (score1: string, score2: string) => {
+    const p1Score = parseInt(score1);
+    const p2Score = parseInt(score2);
+    
+    if (isNaN(p1Score) || isNaN(p2Score)) return false;
+    
+    // Check if either player got skunked (scored 0 while opponent scored > 0)
+    return (p1Score === 0 && p2Score > 0) || (p2Score === 0 && p1Score > 0);
+  };
+
+  // Check for skunked score and trigger animation
+  useEffect(() => {
+    if (checkForSkunkedScore(scorePlayer1, scorePlayer2)) {
+      setShowSkunkedAnimation(true);
+      const timer = setTimeout(() => setShowSkunkedAnimation(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [scorePlayer1, scorePlayer2]);
+
   const resetForm = () => {
     setSelectedPlayer1("");
     setSelectedPlayer2("");
     setScorePlayer1("");
     setScorePlayer2("");
+    setShowSkunkedAnimation(false);
   };
 
   const recordMatch = async () => {
@@ -161,7 +182,7 @@ export const MatchRecordModal = ({
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl relative">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Target className="w-5 h-5 text-ping-pong" />
@@ -261,6 +282,33 @@ export const MatchRecordModal = ({
             {recording ? 'Recording...' : 'Record Match'}
           </Button>
         </div>
+
+        {/* SKUNKED Animation Overlay */}
+        {showSkunkedAnimation && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-lg">
+            <div className="text-center space-y-4 animate-bounce">
+              <div className="text-6xl animate-pulse">🦨</div>
+              <div className="text-4xl font-bold text-white animate-pulse">
+                SKUNKED!
+              </div>
+              <div className="text-xl text-yellow-400 font-semibold animate-pulse">
+                Someone got shut out!
+              </div>
+              <div className="flex justify-center space-x-2">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-2 h-2 bg-victory-gold rounded-full animate-ping"
+                    style={{
+                      animationDelay: `${i * 0.2}s`,
+                      animationDuration: '1s'
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
