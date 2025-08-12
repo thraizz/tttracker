@@ -2,124 +2,76 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trophy, Users, Target } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Trophy, Users, Target, Settings } from "lucide-react";
+import { RoomManager } from "@/components/RoomManager";
 import PlayerManagement from "@/components/PlayerManagement";
 import TournamentBracket from "@/components/TournamentBracket";
 import MMRMode from "@/components/MMRMode";
 import { Player, Match, Tournament, MMRMatch } from "@/types/tournament";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRoom } from "@/contexts/RoomContext";
+import { updateRoom } from "@/services/roomService";
 
 const Index = () => {
+  const { user, loading: authLoading } = useAuth();
+  const { currentRoom, loading: roomLoading } = useRoom();
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentTournament, setCurrentTournament] = useState<Tournament | null>(null);
   const [view, setView] = useState<'setup' | 'tournament'>('setup');
   const [mmrMatches, setMmrMatches] = useState<MMRMatch[]>([]);
   const [activeTab, setActiveTab] = useState<'tournament' | 'mmr'>('tournament');
 
-  // Save data to localStorage
-  const saveToLocalStorage = (key: string, data: unknown) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-      console.error('Failed to save to localStorage:', error);
-    }
-  };
-
-  // Load data from localStorage
-  const loadFromLocalStorage = (key: string) => {
-    try {
-      const stored = localStorage.getItem(key);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Convert date strings back to Date objects
-        if (key === 'currentTournament' && parsed) {
-          if (parsed.createdAt) parsed.createdAt = new Date(parsed.createdAt);
-          if (parsed.completedAt) parsed.completedAt = new Date(parsed.completedAt);
-          if (parsed.matches) {
-            parsed.matches.forEach((match: Match) => {
-              if (match.completedAt) match.completedAt = new Date(match.completedAt);
-            });
-          }
-        }
-        return parsed;
-      }
-    } catch (error) {
-      console.error('Failed to load from localStorage:', error);
-    }
-    return null;
-  };
-
-  // Load initial data on component mount
+  // Load data from current room
   useEffect(() => {
-    const savedPlayers = loadFromLocalStorage('players');
-    const savedTournament = loadFromLocalStorage('currentTournament');
-    const savedView = loadFromLocalStorage('view');
-    const savedMmrMatches = loadFromLocalStorage('mmrMatches');
-    const savedActiveTab = loadFromLocalStorage('activeTab');
-
-    if (savedPlayers) {
-      // Ensure players have MMR fields
-      const playersWithMmr = savedPlayers.map((player: Player) => ({
+    if (currentRoom) {
+      const playersWithMmr = currentRoom.players.map((player: Player) => ({
         ...player,
         mmr: player.mmr || 1000,
         peakMmr: player.peakMmr || player.mmr || 1000
       }));
       setPlayers(playersWithMmr);
-    }
-    if (savedTournament) {
-      setCurrentTournament(savedTournament);
-    }
-    if (savedView && (savedView === 'setup' || savedView === 'tournament')) {
-      setView(savedView);
-    }
-    if (savedMmrMatches) {
-      setMmrMatches(savedMmrMatches);
-    }
-    if (savedActiveTab && (savedActiveTab === 'tournament' || savedActiveTab === 'mmr')) {
-      setActiveTab(savedActiveTab);
-    }
-  }, []);
-
-  // Save players to localStorage whenever they change
-  useEffect(() => {
-    saveToLocalStorage('players', players);
-  }, [players]);
-
-  // Save tournament to localStorage whenever it changes
-  useEffect(() => {
-    if (currentTournament) {
-      saveToLocalStorage('currentTournament', currentTournament);
+      
+      // Load the active tournament from room tournaments
+      const activeTournament = currentRoom.tournaments.find(t => t.status === 'active');
+      if (activeTournament) {
+        setCurrentTournament(activeTournament);
+        setView('tournament');
+      } else {
+        setCurrentTournament(null);
+        setView('setup');
+      }
+      
+      setMmrMatches(currentRoom.mmrMatches || []);
     } else {
-      localStorage.removeItem('currentTournament');
+      // Reset state when no room is selected
+      setPlayers([]);
+      setCurrentTournament(null);
+      setView('setup');
+      setMmrMatches([]);
     }
-  }, [currentTournament]);
+  }, [currentRoom]);
 
-  // Save view to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage('view', view);
-  }, [view]);
-
-  // Save MMR matches to localStorage whenever they change
-  useEffect(() => {
-    saveToLocalStorage('mmrMatches', mmrMatches);
-  }, [mmrMatches]);
-
-  // Save active tab to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage('activeTab', activeTab);
-  }, [activeTab]);
-
-  const handleUpdatePlayers = (updatedPlayers: Player[]) => {
+  const handleUpdatePlayers = async (updatedPlayers: Player[]) => {
+    if (!currentRoom) return;
+    
     // Ensure all players have MMR fields when updated
     const playersWithMmr = updatedPlayers.map(player => ({
       ...player,
       mmr: player.mmr || 1000,
       peakMmr: player.peakMmr || player.mmr || 1000
     }));
-    setPlayers(playersWithMmr);
+    
+    try {
+      await updateRoom(currentRoom.id, { players: playersWithMmr });
+      setPlayers(playersWithMmr);
+    } catch (error) {
+      console.error('Failed to update players in room:', error);
+    }
   };
 
-  const startTournament = () => {
-    if (players.length < 2) return;
+  const startTournament = async () => {
+    if (players.length < 2 || !currentRoom) return;
 
     const matches = generateMatches(players);
     const tournament: Tournament = {
@@ -131,8 +83,14 @@ const Index = () => {
       currentView: 'next-match'
     };
 
-    setCurrentTournament(tournament);
-    setView('tournament');
+    try {
+      const updatedTournaments = [...currentRoom.tournaments.filter(t => t.status !== 'active'), tournament];
+      await updateRoom(currentRoom.id, { tournaments: updatedTournaments });
+      setCurrentTournament(tournament);
+      setView('tournament');
+    } catch (error) {
+      console.error('Failed to start tournament:', error);
+    }
   };
 
   const generateMatches = (players: Player[]): Match[] => {
@@ -182,10 +140,60 @@ const Index = () => {
     return matches;
   };
 
-  const resetTournament = () => {
-    setCurrentTournament(null);
-    setView('setup');
+  const resetTournament = async () => {
+    if (!currentRoom || !currentTournament) return;
+    
+    try {
+      const updatedTournaments = currentRoom.tournaments.map(t => 
+        t.id === currentTournament.id ? { ...t, status: 'completed' as const } : t
+      );
+      await updateRoom(currentRoom.id, { tournaments: updatedTournaments });
+      setCurrentTournament(null);
+      setView('setup');
+    } catch (error) {
+      console.error('Failed to reset tournament:', error);
+    }
   };
+
+  // Show loading while authenticating or loading room
+  if (authLoading || roomLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show room selection if no current room
+  if (!currentRoom) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-soft-gray to-background">
+        <div className="container max-w-4xl mx-auto py-8 px-4">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-ping-pong to-victory-gold flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-ping-pong to-victory-gold bg-clip-text text-transparent">
+                TTTracker
+              </h1>
+            </div>
+            <p className="text-muted-foreground text-lg mb-8">
+              Tournament brackets and MMR tracking for your table tennis group
+            </p>
+          </div>
+          
+          <Card className="p-6">
+            <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Room</h2>
+            <RoomManager />
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'tournament' && currentTournament) {
     return (
@@ -201,7 +209,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-soft-gray to-background">
       <div className="container max-w-6xl mx-auto py-8 px-4">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-ping-pong to-victory-gold flex items-center justify-center">
               <Trophy className="w-6 h-6 text-white" />
@@ -213,7 +221,26 @@ const Index = () => {
           <p className="text-muted-foreground text-lg">
             Tournament brackets and MMR tracking for your table tennis group
           </p>
+          
+          {/* Settings Button */}
+          <div className="absolute top-0 right-0">
+            <Link to="/settings">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+            </Link>
+          </div>
         </div>
+
+        {/* Room Management */}
+        <Card className="p-6 mb-8" style={{ boxShadow: 'var(--shadow-tournament)' }}>
+          <div className="flex items-center gap-3 mb-6">
+            <Users className="w-5 h-5 text-ping-pong" />
+            <h2 className="text-2xl font-semibold">Room</h2>
+          </div>
+          <RoomManager />
+        </Card>
 
         {/* Mode Selection Tabs */}
         <Tabs value={activeTab} onValueChange={(value: 'tournament' | 'mmr') => setActiveTab(value)} className="space-y-8">

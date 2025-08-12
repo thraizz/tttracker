@@ -54,4 +54,34 @@ export interface MMRMatch {
     player2NewMmr: number;
   };
   completedAt: Date;
+  roomId?: string;
+}
+
+export interface Room {
+  id: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+  createdAt: Date;
+  isPublic: boolean;
+  members: string[];
+  players: Player[];
+  tournaments: Tournament[];
+  mmrMatches: MMRMatch[];
+  settings: {
+    allowPublicJoin: boolean;
+    requireApproval: boolean;
+    maxMembers?: number;
+  };
+}
+
+export interface RoomInvite {
+  id: string;
+  roomId: string;
+  roomName: string;
+  createdBy: string;
+  createdAt: Date;
+  expiresAt?: Date;
+  usageLimit?: number;
+  usedCount: number;
 }

@@ -5,8 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { Target, Trophy, History, TrendingUp, TrendingDown, Plus, Users } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
+import { useRoom } from "@/contexts/RoomContext";
+import { updateRoom } from "@/services/roomService";
 
 interface MMRModeProps {
   players: Player[];
@@ -16,10 +19,13 @@ interface MMRModeProps {
 }
 
 const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModeProps) => {
+  const { currentRoom } = useRoom();
+  const { toast } = useToast();
   const [selectedPlayer1, setSelectedPlayer1] = useState<string>("");
   const [selectedPlayer2, setSelectedPlayer2] = useState<string>("");
   const [scorePlayer1, setScorePlayer1] = useState("");
   const [scorePlayer2, setScorePlayer2] = useState("");
+  const [recording, setRecording] = useState(false);
 
   // ELO rating calculation
   const calculateEloChange = (ratingA: number, ratingB: number, result: number, kFactor = 32) => {
@@ -28,9 +34,13 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
     return change;
   };
 
-  const recordMatch = () => {
+  const recordMatch = async () => {
     if (!selectedPlayer1 || !selectedPlayer2 || !scorePlayer1 || !scorePlayer2) return;
     if (selectedPlayer1 === selectedPlayer2) return;
+    if (!currentRoom) {
+      toast({ title: 'Error', description: 'No room selected', variant: 'destructive' });
+      return;
+    }
     
     const p1Score = parseInt(scorePlayer1);
     const p2Score = parseInt(scorePlayer2);
@@ -42,66 +52,87 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
     
     if (!player1 || !player2) return;
 
-    const winner = p1Score > p2Score ? player1 : player2;
-    const result1 = p1Score > p2Score ? 1 : 0;
-    const result2 = 1 - result1;
+    setRecording(true);
+    
+    try {
+      const winner = p1Score > p2Score ? player1 : player2;
+      const result1 = p1Score > p2Score ? 1 : 0;
+      const result2 = 1 - result1;
 
-    const change1 = calculateEloChange(player1.mmr, player2.mmr, result1);
-    const change2 = calculateEloChange(player2.mmr, player1.mmr, result2);
+      const change1 = calculateEloChange(player1.mmr, player2.mmr, result1);
+      const change2 = calculateEloChange(player2.mmr, player1.mmr, result2);
 
-    const newMmr1 = Math.max(0, player1.mmr + change1);
-    const newMmr2 = Math.max(0, player2.mmr + change2);
+      const newMmr1 = Math.max(0, player1.mmr + change1);
+      const newMmr2 = Math.max(0, player2.mmr + change2);
 
-    // Create match record
-    const match: MMRMatch = {
-      id: `mmr-${Date.now()}`,
-      player1,
-      player2,
-      winner,
-      score: {
-        player1Score: p1Score,
-        player2Score: p2Score
-      },
-      mmrChange: {
-        player1Change: change1,
-        player2Change: change2,
-        player1NewMmr: newMmr1,
-        player2NewMmr: newMmr2
-      },
-      completedAt: new Date()
-    };
+      // Create match record
+      const match: MMRMatch = {
+        id: `mmr-${Date.now()}`,
+        player1,
+        player2,
+        winner,
+        score: {
+          player1Score: p1Score,
+          player2Score: p2Score
+        },
+        mmrChange: {
+          player1Change: change1,
+          player2Change: change2,
+          player1NewMmr: newMmr1,
+          player2NewMmr: newMmr2
+        },
+        completedAt: new Date(),
+        roomId: currentRoom.id
+      };
 
-    // Update players
-    const updatedPlayers = players.map(player => {
-      if (player.id === player1.id) {
-        return {
-          ...player,
-          mmr: newMmr1,
-          peakMmr: Math.max(player.peakMmr, newMmr1),
-          wins: result1 === 1 ? player.wins + 1 : player.wins,
-          losses: result1 === 0 ? player.losses + 1 : player.losses
-        };
-      }
-      if (player.id === player2.id) {
-        return {
-          ...player,
-          mmr: newMmr2,
-          peakMmr: Math.max(player.peakMmr, newMmr2),
-          wins: result2 === 1 ? player.wins + 1 : player.wins,
-          losses: result2 === 0 ? player.losses + 1 : player.losses
-        };
-      }
-      return player;
-    });
+      // Update players
+      const updatedPlayers = players.map(player => {
+        if (player.id === player1.id) {
+          return {
+            ...player,
+            mmr: newMmr1,
+            peakMmr: Math.max(player.peakMmr, newMmr1),
+            wins: result1 === 1 ? player.wins + 1 : player.wins,
+            losses: result1 === 0 ? player.losses + 1 : player.losses
+          };
+        }
+        if (player.id === player2.id) {
+          return {
+            ...player,
+            mmr: newMmr2,
+            peakMmr: Math.max(player.peakMmr, newMmr2),
+            wins: result2 === 1 ? player.wins + 1 : player.wins,
+            losses: result2 === 0 ? player.losses + 1 : player.losses
+          };
+        }
+        return player;
+      });
 
-    onUpdatePlayers(updatedPlayers);
-    onAddMatch(match);
+      const updatedMatches = [...mmrMatches, match];
 
-    // Reset form
-    setSelectedPlayer1("");
-    setSelectedPlayer2("");
-    setScorePlayer1("");
-    setScorePlayer2("");
+      // Update room in Firebase
+      await updateRoom(currentRoom.id, {
+        players: updatedPlayers,
+        mmrMatches: updatedMatches
+      });
+
+      // Update local state
+      onUpdatePlayers(updatedPlayers);
+      onAddMatch(match);
+
+      // Reset form
+      setSelectedPlayer1("");
+      setSelectedPlayer2("");
+      setScorePlayer1("");
+      setScorePlayer2("");
+
+      toast({ title: 'Success', description: 'Match recorded successfully!' });
+    } catch (error) {
+      console.error('Error recording match:', error);
+      toast({ title: 'Error', description: 'Failed to record match', variant: 'destructive' });
+    } finally {
+      setRecording(false);
+    }
   };
 
   // Sort players by MMR for leaderboard
@@ -215,12 +246,12 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
             <div className="mt-6 text-center">
               <Button
                 onClick={recordMatch}
-                disabled={!selectedPlayer1 || !selectedPlayer2 || !scorePlayer1 || !scorePlayer2 || selectedPlayer1 === selectedPlayer2 || parseInt(scorePlayer1) === parseInt(scorePlayer2)}
+                disabled={recording || !selectedPlayer1 || !selectedPlayer2 || !scorePlayer1 || !scorePlayer2 || selectedPlayer1 === selectedPlayer2 || parseInt(scorePlayer1) === parseInt(scorePlayer2)}
                 className="bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold px-8"
                 size="lg"
               >
                 <Target className="w-5 h-5 mr-2" />
-                Record Match
+                {recording ? 'Recording...' : 'Record Match'}
               </Button>
             </div>
           </Card>
