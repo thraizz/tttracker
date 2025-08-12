@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { ArrowLeft, Trophy, Crown, Users, Clock } from "lucide-react";
+import { Trophy } from "lucide-react";
 import { Tournament, Match, Player } from "@/types/tournament";
-import MatchCard from "@/components/MatchCard";
-import TournamentGraph from "@/components/TournamentGraph";
+import { TournamentHeader } from "./TournamentBracket/TournamentHeader";
+import { NextMatchView } from "./TournamentBracket/NextMatchView";
+import { TournamentWinner } from "./TournamentBracket/TournamentWinner";
+import { MatchesList } from "./TournamentBracket/MatchesList";
+import { ScoreInputModal } from "./TournamentBracket/ScoreInputModal";
 
 interface TournamentBracketProps {
   tournament: Tournament;
@@ -16,8 +16,6 @@ interface TournamentBracketProps {
 
 const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: TournamentBracketProps) => {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [scorePlayer1, setScorePlayer1] = useState("");
-  const [scorePlayer2, setScorePlayer2] = useState("");
   const [currentView, setCurrentView] = useState<'next-match' | 'pending-matches'>(tournament.currentView || 'next-match');
 
   // Find the next available match to be played
@@ -95,8 +93,6 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
 
     onUpdateTournament(updatedTournament);
     setSelectedMatch(null);
-    setScorePlayer1("");
-    setScorePlayer2("");
 
     // Switch to next-match view after completing a match (unless tournament is complete)
     if (completedMatches < totalMatches) {
@@ -112,16 +108,12 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
     });
   };
 
-  const submitScore = () => {
-    if (!selectedMatch || !scorePlayer1 || !scorePlayer2) return;
+  const handleSubmitScore = (matchId: string, player1Score: number, player2Score: number) => {
+    const match = tournament.matches.find(m => m.id === matchId);
+    if (!match) return;
 
-    const p1Score = parseInt(scorePlayer1);
-    const p2Score = parseInt(scorePlayer2);
-
-    if (isNaN(p1Score) || isNaN(p2Score) || p1Score === p2Score) return;
-
-    const winner = p1Score > p2Score ? selectedMatch.player1 : selectedMatch.player2;
-    updateMatch(selectedMatch.id, winner, { player1Score: p1Score, player2Score: p2Score });
+    const winner = player1Score > player2Score ? match.player1 : match.player2;
+    updateMatch(matchId, winner, { player1Score, player2Score });
   };
 
   const pendingMatches = tournament.matches.filter(m => m.status === 'pending');
@@ -131,77 +123,18 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
   // Show next match view with graph and next match info
   if (currentView === 'next-match' && tournament.status === 'active' && nextMatch) {
     return (
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <Trophy className="w-8 h-8 text-ping-pong" />
-              <h1 className="text-2xl font-bold">Tournament Bracket</h1>
-            </div>
-            <Badge variant="secondary">In Progress</Badge>
-          </div>
-
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Users className="w-4 h-4" />
-            <span>{tournament.players.length} players</span>
-          </div>
-        </div>
-
-        {/* Next Match Title */}
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-ping-pong mb-4">
-            NEXT: {nextMatch.player1?.name?.toUpperCase()} VS {nextMatch.player2?.name?.toUpperCase()}
-          </h2>
-          <p className="text-muted-foreground text-lg">
-            Round {nextMatch.round} • Tournament Progress
-          </p>
-        </div>
-
-        {/* Tournament Graph */}
-        <div>
-          <TournamentGraph matches={tournament.matches} players={tournament.players} />
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="text-center space-x-4">
-          <Button
-            onClick={() => setCurrentView('pending-matches')}
-            size="lg"
-            className="bg-gradient-to-r from-ping-pong to-table-green hover:from-ping-pong/90 hover:to-table-green/90 text-white font-semibold px-8"
-          >
-            <Trophy className="w-5 h-5 mr-2" />
-            Proceed to Match
-          </Button>
-        </div>
-      </div>
+      <NextMatchView
+        tournament={tournament}
+        nextMatch={nextMatch}
+        onReset={onReset}
+        onProceedToMatch={() => setCurrentView('pending-matches')}
+      />
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={onReset} className="text-muted-foreground">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Setup
-        </Button>
-
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Trophy className="w-8 h-8 text-ping-pong" />
-            <h1 className="text-2xl font-bold">Tournament Bracket</h1>
-          </div>
-          <Badge variant={tournament.status === 'completed' ? 'default' : 'secondary'}>
-            {tournament.status === 'completed' ? 'Completed' : 'In Progress'}
-          </Badge>
-        </div>
-
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Users className="w-4 h-4" />
-          <span>{tournament.players.length} players</span>
-        </div>
-      </div>
+      <TournamentHeader tournament={tournament} onReset={onReset} />
 
       {/* View Navigation */}
       {tournament.status === 'active' && nextMatch && (
@@ -217,116 +150,21 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
         </div>
       )}
 
-      {/* Tournament Winner */}
       {tournament.status === 'completed' && tournament.winner && (
-        <Card className="p-6 bg-gradient-to-r from-victory-gold/10 to-ping-pong/10 border-victory-gold/30">
-          <div className="text-center">
-            <Crown className="w-16 h-16 text-victory-gold mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Tournament Champion!</h2>
-            <h3 className="text-3xl font-bold text-victory-gold mb-2">{tournament.winner.name}</h3>
-            <Badge className="bg-victory-gold text-white">
-              {tournament.winner.wins}W - {tournament.winner.losses}L
-            </Badge>
-          </div>
-        </Card>
+        <TournamentWinner winner={tournament.winner} />
       )}
 
-      {/* Matches Grid */}
-      <div className="grid gap-8">
-        {/* Pending Matches */}
-        {pendingMatches.length > 0 && (
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Clock className="w-5 h-5 text-ping-pong" />
-              <h2 className="text-xl font-semibold">Pending Matches</h2>
-              <Badge>{pendingMatches.length} remaining</Badge>
-            </div>
+      <MatchesList
+        pendingMatches={pendingMatches}
+        completedMatches={completedMatches}
+        onSelectMatch={setSelectedMatch}
+      />
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pendingMatches.map((match) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  onSelectMatch={setSelectedMatch}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Completed Matches */}
-        {completedMatches.length > 0 && (
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Trophy className="w-5 h-5 text-table-green" />
-              <h2 className="text-xl font-semibold">Completed Matches</h2>
-              <Badge variant="secondary">{completedMatches.length} completed</Badge>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {completedMatches.map((match) => (
-                <MatchCard
-                  key={match.id}
-                  match={match}
-                  onSelectMatch={() => { }} // No interaction for completed matches
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Score Input Modal */}
-      {selectedMatch && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md p-6">
-            <h3 className="text-xl font-semibold mb-4 text-center">Record Match Result</h3>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <span className="font-medium">{selectedMatch.player1.name}</span>
-                <Input
-                  type="number"
-                  placeholder="Score"
-                  value={scorePlayer1}
-                  onChange={(e) => setScorePlayer1(e.target.value)}
-                  className="w-20 text-center"
-                />
-              </div>
-
-              <div className="text-center text-muted-foreground">VS</div>
-
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <span className="font-medium">{selectedMatch.player2.name}</span>
-                <Input
-                  type="number"
-                  placeholder="Score"
-                  value={scorePlayer2}
-                  onChange={(e) => setScorePlayer2(e.target.value)}
-                  className="w-20 text-center"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedMatch(null)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={submitScore}
-                disabled={!scorePlayer1 || !scorePlayer2 || parseInt(scorePlayer1) === parseInt(scorePlayer2)}
-                className="flex-1 bg-table-green hover:bg-table-green/90 text-white"
-              >
-                Record Result
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
+      <ScoreInputModal
+        match={selectedMatch}
+        onClose={() => setSelectedMatch(null)}
+        onSubmitScore={handleSubmitScore}
+      />
     </div>
   );
 };

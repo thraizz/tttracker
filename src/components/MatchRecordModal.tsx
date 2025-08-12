@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Target, Plus } from "lucide-react";
+import { Target } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
 import { useRoom } from "@/contexts/RoomContext";
 import { updateRoom } from "@/services/roomService";
-import { getRankByMmr } from "@/utils/rankSystem";
+import { calculateEloChange } from "@/utils/eloUtils";
+import { PlayerSelectionField } from "./MatchRecordModal/PlayerSelectionField";
+import { SkunkedAnimation } from "./MatchRecordModal/SkunkedAnimation";
 
 interface MatchRecordModalProps {
   players: Player[];
@@ -36,11 +36,6 @@ export const MatchRecordModal = ({
   const [recording, setRecording] = useState(false);
   const [showSkunkedAnimation, setShowSkunkedAnimation] = useState(false);
 
-  const calculateEloChange = (ratingA: number, ratingB: number, result: number, kFactor = 32) => {
-    const expectedA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
-    const change = Math.round(kFactor * (result - expectedA));
-    return change;
-  };
 
   const checkForSkunkedScore = (score1: string, score2: string) => {
     const p1Score = parseInt(score1);
@@ -191,75 +186,24 @@ export const MatchRecordModal = ({
         </DialogHeader>
 
         <div className="grid md:grid-cols-2 gap-6 mt-6">
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Player 1</label>
-              <Select value={selectedPlayer1} onValueChange={setSelectedPlayer1}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select player 1" />
-                </SelectTrigger>
-                <SelectContent>
-                  {players.map(player => {
-                    const rank = getRankByMmr(player.mmr);
-                    return (
-                      <SelectItem key={player.id} value={player.id}>
-                        <div className="flex items-center gap-2">
-                          <span>{rank.icon}</span>
-                          <span>{player.name}</span>
-                          <span className="text-muted-foreground">({player.mmr} MMR)</span>
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Player 1 Score</label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={scorePlayer1}
-                onChange={(e) => setScorePlayer1(e.target.value)}
-                className="text-center text-lg font-semibold"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Player 2</label>
-              <Select value={selectedPlayer2} onValueChange={setSelectedPlayer2}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select player 2" />
-                </SelectTrigger>
-                <SelectContent>
-                  {players.filter(p => p.id !== selectedPlayer1).map(player => {
-                    const rank = getRankByMmr(player.mmr);
-                    return (
-                      <SelectItem key={player.id} value={player.id}>
-                        <div className="flex items-center gap-2">
-                          <span>{rank.icon}</span>
-                          <span>{player.name}</span>
-                          <span className="text-muted-foreground">({player.mmr} MMR)</span>
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Player 2 Score</label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={scorePlayer2}
-                onChange={(e) => setScorePlayer2(e.target.value)}
-                className="text-center text-lg font-semibold"
-              />
-            </div>
-          </div>
+          <PlayerSelectionField
+            label="Player 1"
+            playerValue={selectedPlayer1}
+            scoreValue={scorePlayer1}
+            onPlayerChange={setSelectedPlayer1}
+            onScoreChange={setScorePlayer1}
+            players={players}
+          />
+          
+          <PlayerSelectionField
+            label="Player 2"
+            playerValue={selectedPlayer2}
+            scoreValue={scorePlayer2}
+            onPlayerChange={setSelectedPlayer2}
+            onScoreChange={setScorePlayer2}
+            players={players}
+            excludePlayerId={selectedPlayer1}
+          />
         </div>
 
         <div className="flex gap-3 mt-6">
@@ -283,32 +227,7 @@ export const MatchRecordModal = ({
           </Button>
         </div>
 
-        {/* SKUNKED Animation Overlay */}
-        {showSkunkedAnimation && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-lg">
-            <div className="text-center space-y-4 animate-bounce">
-              <div className="text-6xl animate-pulse">🦨</div>
-              <div className="text-4xl font-bold text-white animate-pulse">
-                SKUNKED!
-              </div>
-              <div className="text-xl text-yellow-400 font-semibold animate-pulse">
-                Someone got shut out!
-              </div>
-              <div className="flex justify-center space-x-2">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-2 h-2 bg-victory-gold rounded-full animate-ping"
-                    style={{
-                      animationDelay: `${i * 0.2}s`,
-                      animationDuration: '1s'
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        <SkunkedAnimation show={showSkunkedAnimation} />
       </DialogContent>
     </Dialog>
   );
