@@ -17,6 +17,26 @@ import {
 import { db } from '../firebase';
 import { Room, RoomInvite } from '../types/tournament';
 
+// Types for Firebase data conversion
+interface FirebaseData {
+  createdAt?: { toDate: () => Date };
+  mmrMatches?: FirebaseMatch[];
+  tournaments?: FirebaseTournament[];
+  [key: string]: unknown;
+}
+
+interface FirebaseMatch {
+  completedAt?: { toDate: () => Date } | string | Date;
+  [key: string]: unknown;
+}
+
+interface FirebaseTournament {
+  createdAt?: { toDate: () => Date } | string | Date;
+  completedAt?: { toDate: () => Date } | string | Date;
+  matches?: FirebaseMatch[];
+  [key: string]: unknown;
+}
+
 const ROOMS_COLLECTION = 'rooms';
 const ROOM_INVITES_COLLECTION = 'roomInvites';
 
@@ -39,11 +59,30 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
   const docSnap = await getDoc(docRef);
   
   if (docSnap.exists()) {
-    const data = docSnap.data();
+    const data = docSnap.data() as FirebaseData;
+    
+    // Convert dates in nested objects
+    const processedData = {
+      ...data,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      mmrMatches: data.mmrMatches?.map((match: FirebaseMatch) => ({
+        ...match,
+        completedAt: match.completedAt?.toDate ? match.completedAt.toDate() : new Date(match.completedAt || new Date())
+      })) || [],
+      tournaments: data.tournaments?.map((tournament: FirebaseTournament) => ({
+        ...tournament,
+        createdAt: tournament.createdAt?.toDate ? tournament.createdAt.toDate() : new Date(tournament.createdAt || new Date()),
+        completedAt: tournament.completedAt?.toDate ? tournament.completedAt.toDate() : tournament.completedAt ? new Date(tournament.completedAt) : undefined,
+        matches: tournament.matches?.map((match: FirebaseMatch) => ({
+          ...match,
+          completedAt: match.completedAt?.toDate ? match.completedAt.toDate() : match.completedAt ? new Date(match.completedAt) : undefined
+        })) || []
+      })) || []
+    };
+    
     return {
       id: docSnap.id,
-      ...data,
-      createdAt: data.createdAt?.toDate() || new Date()
+      ...processedData
     } as Room;
   }
   
@@ -57,11 +96,33 @@ export const getUserRooms = async (userId: string): Promise<Room[]> => {
   );
   
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate() || new Date()
-  })) as Room[];
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data() as FirebaseData;
+    
+    // Convert dates in nested objects
+    const processedData = {
+      ...data,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      mmrMatches: data.mmrMatches?.map((match: FirebaseMatch) => ({
+        ...match,
+        completedAt: match.completedAt?.toDate ? match.completedAt.toDate() : new Date(match.completedAt || new Date())
+      })) || [],
+      tournaments: data.tournaments?.map((tournament: FirebaseTournament) => ({
+        ...tournament,
+        createdAt: tournament.createdAt?.toDate ? tournament.createdAt.toDate() : new Date(tournament.createdAt || new Date()),
+        completedAt: tournament.completedAt?.toDate ? tournament.completedAt.toDate() : tournament.completedAt ? new Date(tournament.completedAt) : undefined,
+        matches: tournament.matches?.map((match: FirebaseMatch) => ({
+          ...match,
+          completedAt: match.completedAt?.toDate ? match.completedAt.toDate() : match.completedAt ? new Date(match.completedAt) : undefined
+        })) || []
+      })) || []
+    };
+    
+    return {
+      id: doc.id,
+      ...processedData
+    } as Room;
+  });
 };
 
 export const joinRoom = async (roomId: string, userId: string): Promise<void> => {
@@ -158,11 +219,30 @@ export const subscribeToRoom = (
   
   return onSnapshot(roomRef, (doc) => {
     if (doc.exists()) {
-      const data = doc.data();
+      const data = doc.data() as FirebaseData;
+      
+      // Convert dates in nested objects
+      const processedData = {
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        mmrMatches: data.mmrMatches?.map((match: FirebaseMatch) => ({
+          ...match,
+          completedAt: match.completedAt?.toDate ? match.completedAt.toDate() : new Date(match.completedAt || new Date())
+        })) || [],
+        tournaments: data.tournaments?.map((tournament: FirebaseTournament) => ({
+          ...tournament,
+          createdAt: tournament.createdAt?.toDate ? tournament.createdAt.toDate() : new Date(tournament.createdAt || new Date()),
+          completedAt: tournament.completedAt?.toDate ? tournament.completedAt.toDate() : tournament.completedAt ? new Date(tournament.completedAt) : undefined,
+          matches: tournament.matches?.map((match: FirebaseMatch) => ({
+            ...match,
+            completedAt: match.completedAt?.toDate ? match.completedAt.toDate() : match.completedAt ? new Date(match.completedAt) : undefined
+          })) || []
+        })) || []
+      };
+      
       callback({
         id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date()
+        ...processedData
       } as Room);
     } else {
       callback(null);
