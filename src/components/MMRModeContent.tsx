@@ -4,7 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trophy, History, TrendingUp, TrendingDown, Users } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
 import { MatchRecordModal } from "@/components/MatchRecordModal";
-import { getRankByMmr, getRankProgress } from "@/utils/rankSystem";
+import { getRankByMmrWithContrast, getRankProgress, getRankColorForTheme } from "@/utils/rankSystem";
+import { MMRDisplay } from "@/components/MMRDisplay";
+import { useTheme } from "@/hooks/useTheme";
 
 interface MMRModeContentProps {
   players: Player[];
@@ -14,6 +16,7 @@ interface MMRModeContentProps {
 }
 
 export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModeContentProps) => {
+  const isDark = useTheme();
   // Sort players by MMR for leaderboard
   const leaderboard = [...players].sort((a, b) => b.mmr - a.mmr);
 
@@ -33,7 +36,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
   return (
     <div className="space-y-6">
       <Tabs defaultValue="leaderboard" className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 justify-between">
           <TabsList className="grid grid-cols-2 w-fit">
             <TabsTrigger value="leaderboard" className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
@@ -45,11 +48,13 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
             </TabsTrigger>
           </TabsList>
 
-          <MatchRecordModal
-            players={players}
-            onUpdatePlayers={onUpdatePlayers}
-            onAddMatch={onAddMatch}
-          />
+          <div className="w-fit">
+            <MatchRecordModal
+              players={players}
+              onUpdatePlayers={onUpdatePlayers}
+              onAddMatch={onAddMatch}
+            />
+          </div>
         </div>
 
         <TabsContent value="leaderboard">
@@ -61,38 +66,37 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
 
             <div className="space-y-4">
               {leaderboard.map((player, index) => {
-                const rank = getRankByMmr(player.mmr);
+                const rank = getRankByMmrWithContrast(player.mmr, isDark);
                 const rankProgress = getRankProgress(player.mmr);
                 return (
                   <div
                     key={player.id}
-                    className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
-                      index === 0 
-                        ? 'bg-gradient-to-r from-victory-gold/20 via-victory-gold/10 to-victory-gold/20 border-victory-gold/50 shadow-lg' 
-                        : index === 1
+                    className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${index === 0
+                      ? 'bg-gradient-to-r from-victory-gold/20 via-victory-gold/10 to-victory-gold/20 border-victory-gold/50 shadow-lg'
+                      : index === 1
                         ? 'bg-gradient-to-r from-gray-300/20 via-gray-300/10 to-gray-300/20 border-gray-300/50 shadow-md'
                         : index === 2
-                        ? 'bg-gradient-to-r from-amber-600/20 via-amber-600/10 to-amber-600/20 border-amber-600/50 shadow-md'
-                        : 'bg-gradient-to-r from-muted/50 to-muted/30 border-muted-foreground/20 hover:border-muted-foreground/40'
-                    }`}
+                          ? 'bg-gradient-to-r from-amber-600/20 via-amber-600/10 to-amber-600/20 border-amber-600/50 shadow-md'
+                          : 'bg-gradient-to-r from-muted/50 to-muted/30 border-muted-foreground/20 hover:border-muted-foreground/40'
+                      }`}
                     style={{
-                      background: index > 2 ? `linear-gradient(135deg, ${rank.color}15, ${rank.color}05)` : undefined,
-                      borderColor: index > 2 ? `${rank.color}30` : undefined
+                      background: index > 2 ? `linear-gradient(135deg, ${rank.originalColor}15, ${rank.originalColor}05)` : undefined,
+                      borderColor: index > 2 ? `${rank.originalColor}30` : undefined
                     }}
                   >
                     {/* Rank position badge */}
                     <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-background border-2 border-current flex items-center justify-center font-bold text-sm shadow-lg">
                       {index + 1}
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         {/* Rank icon with glow effect */}
                         <div className="relative">
-                          <div 
+                          <div
                             className="text-4xl filter drop-shadow-lg"
-                            style={{ 
-                              filter: `drop-shadow(0 0 8px ${rank.color}50)` 
+                            style={{
+                              filter: `drop-shadow(0 0 8px ${rank.originalColor}50)`
                             }}
                           >
                             {rank.icon}
@@ -101,16 +105,16 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
                             {rank.icon}
                           </div>
                         </div>
-                        
+
                         <div className="space-y-1">
                           <div className="font-bold text-xl">{player.name}</div>
                           <div className="flex items-center gap-3">
-                            <span 
+                            <span
                               className="font-semibold text-sm px-2 py-1 rounded-full"
-                              style={{ 
-                                backgroundColor: `${rank.color}20`, 
-                                color: rank.color,
-                                border: `1px solid ${rank.color}40`
+                              style={{
+                                backgroundColor: `${rank.contrastSafeColor}20`,
+                                color: rank.contrastSafeColor,
+                                border: `1px solid ${rank.contrastSafeColor}40`
                               }}
                             >
                               {rank.name}
@@ -119,7 +123,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
                               {player.wins}W - {player.losses}L
                             </span>
                           </div>
-                          
+
                           {/* Progress bar for rank advancement */}
                           {rankProgress.nextRank && (
                             <div className="mt-2 space-y-1">
@@ -130,11 +134,11 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
                                 <span className="font-medium">{rankProgress.progress}%</span>
                               </div>
                               <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                                <div 
+                                <div
                                   className="h-full transition-all duration-500 rounded-full"
-                                  style={{ 
+                                  style={{
                                     width: `${rankProgress.progress}%`,
-                                    background: `linear-gradient(90deg, ${rank.color}, ${rankProgress.nextRank.color})`
+                                    background: `linear-gradient(90deg, ${rank.contrastSafeColor}, ${getRankColorForTheme(rankProgress.nextRank, isDark)})`
                                   }}
                                 />
                               </div>
@@ -142,16 +146,8 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
                           )}
                         </div>
                       </div>
-                      
-                      <div className="text-right space-y-1">
-                        <div className="text-3xl font-bold bg-gradient-to-r from-ping-pong to-table-green bg-clip-text text-transparent">
-                          {player.mmr}
-                        </div>
-                        <div className="text-sm text-muted-foreground font-medium">MMR</div>
-                        <div className="text-xs text-muted-foreground">
-                          Peak: {player.peakMmr}
-                        </div>
-                      </div>
+
+                      <MMRDisplay mmr={player.mmr} peakMmr={player.peakMmr} />
                     </div>
                   </div>
                 );

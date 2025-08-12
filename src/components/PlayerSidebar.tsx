@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Users, Trophy, Target, Settings2 } from "lucide-react";
-import { Player } from "@/types/tournament";
+import { Player, MMRMatch } from "@/types/tournament";
 import PlayerManagement from "@/components/PlayerManagement";
+import { MatchRecordModal } from "@/components/MatchRecordModal";
 import { getRankByMmr } from "@/utils/rankSystem";
 
 interface PlayerSidebarProps {
@@ -13,13 +14,15 @@ interface PlayerSidebarProps {
   onUpdatePlayers: (players: Player[]) => void;
   activeTab: 'tournament' | 'mmr';
   quickActions?: React.ReactNode;
+  onAddMatch?: (match: MMRMatch) => void;
 }
 
 export const PlayerSidebar = ({
   players,
   onUpdatePlayers,
   activeTab,
-  quickActions
+  quickActions,
+  onAddMatch
 }: PlayerSidebarProps) => {
   const [playerManagementOpen, setPlayerManagementOpen] = useState(false);
 
@@ -39,7 +42,7 @@ export const PlayerSidebar = ({
               {players.length}
             </Badge>
           </div>
-          
+
           <Dialog open={playerManagementOpen} onOpenChange={setPlayerManagementOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="sm">
@@ -47,9 +50,9 @@ export const PlayerSidebar = ({
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-              <PlayerManagement 
-                players={players} 
-                onUpdatePlayers={onUpdatePlayers} 
+              <PlayerManagement
+                players={players}
+                onUpdatePlayers={onUpdatePlayers}
               />
             </DialogContent>
           </Dialog>
@@ -110,7 +113,7 @@ export const PlayerSidebar = ({
                 </Card>
               ))
             )}
-            
+
             {players.length > 5 && activeTab === 'mmr' && (
               <div className="text-center pt-2">
                 <Dialog open={playerManagementOpen} onOpenChange={setPlayerManagementOpen}>
@@ -133,7 +136,7 @@ export const PlayerSidebar = ({
             <Target className="w-4 h-4 text-ping-pong" />
             <span className="font-medium text-sm">Quick Actions</span>
           </div>
-          
+
           {activeTab === 'mmr' && players.length >= 2 && onAddMatch && (
             <MatchRecordModal
               players={players}
@@ -147,7 +150,7 @@ export const PlayerSidebar = ({
               }
             />
           )}
-          
+
           {quickActions}
         </div>
       </div>

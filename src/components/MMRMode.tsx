@@ -10,7 +10,9 @@ import { Target, Trophy, History, TrendingUp, TrendingDown, Plus, Users } from "
 import { Player, MMRMatch } from "@/types/tournament";
 import { useRoom } from "@/contexts/RoomContext";
 import { updateRoom } from "@/services/roomService";
-import { getRankByMmr, getRankProgress, formatRankDisplay } from "@/utils/rankSystem";
+import { getRankByMmrWithContrast, getRankProgress, formatRankDisplay, getRankColorForTheme } from "@/utils/rankSystem";
+import { MMRDisplay } from "@/components/MMRDisplay";
+import { useTheme } from "@/hooks/useTheme";
 
 interface MMRModeProps {
   players: Player[];
@@ -22,6 +24,7 @@ interface MMRModeProps {
 const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModeProps) => {
   const { currentRoom } = useRoom();
   const { toast } = useToast();
+  const isDark = useTheme();
   const [selectedPlayer1, setSelectedPlayer1] = useState<string>("");
   const [selectedPlayer2, setSelectedPlayer2] = useState<string>("");
   const [scorePlayer1, setScorePlayer1] = useState("");
@@ -42,19 +45,19 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
       toast({ title: 'Error', description: 'No room selected', variant: 'destructive' });
       return;
     }
-    
+
     const p1Score = parseInt(scorePlayer1);
     const p2Score = parseInt(scorePlayer2);
-    
+
     if (isNaN(p1Score) || isNaN(p2Score) || p1Score === p2Score) return;
-    
+
     const player1 = players.find(p => p.id === selectedPlayer1);
     const player2 = players.find(p => p.id === selectedPlayer2);
-    
+
     if (!player1 || !player2) return;
 
     setRecording(true);
-    
+
     try {
       const winner = p1Score > p2Score ? player1 : player2;
       const result1 = p1Score > p2Score ? 1 : 0;
@@ -196,7 +199,7 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
                     </SelectTrigger>
                     <SelectContent>
                       {players.map(player => {
-                        const rank = getRankByMmr(player.mmr);
+                        const rank = getRankByMmrWithContrast(player.mmr, isDark);
                         return (
                           <SelectItem key={player.id} value={player.id}>
                             <div className="flex items-center gap-2">
@@ -231,7 +234,7 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
                     </SelectTrigger>
                     <SelectContent>
                       {players.filter(p => p.id !== selectedPlayer1).map(player => {
-                        const rank = getRankByMmr(player.mmr);
+                        const rank = getRankByMmrWithContrast(player.mmr, isDark);
                         return (
                           <SelectItem key={player.id} value={player.id}>
                             <div className="flex items-center gap-2">
@@ -281,38 +284,37 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
 
             <div className="space-y-4">
               {leaderboard.map((player, index) => {
-                const rank = getRankByMmr(player.mmr);
+                const rank = getRankByMmrWithContrast(player.mmr, isDark);
                 const rankProgress = getRankProgress(player.mmr);
                 return (
                   <div
                     key={player.id}
-                    className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
-                      index === 0 
-                        ? 'bg-gradient-to-r from-victory-gold/20 via-victory-gold/10 to-victory-gold/20 border-victory-gold/50 shadow-lg' 
-                        : index === 1
+                    className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${index === 0
+                      ? 'bg-gradient-to-r from-victory-gold/20 via-victory-gold/10 to-victory-gold/20 border-victory-gold/50 shadow-lg'
+                      : index === 1
                         ? 'bg-gradient-to-r from-gray-300/20 via-gray-300/10 to-gray-300/20 border-gray-300/50 shadow-md'
                         : index === 2
-                        ? 'bg-gradient-to-r from-amber-600/20 via-amber-600/10 to-amber-600/20 border-amber-600/50 shadow-md'
-                        : 'bg-gradient-to-r from-muted/50 to-muted/30 border-muted-foreground/20 hover:border-muted-foreground/40'
-                    }`}
+                          ? 'bg-gradient-to-r from-amber-600/20 via-amber-600/10 to-amber-600/20 border-amber-600/50 shadow-md'
+                          : 'bg-gradient-to-r from-muted/50 to-muted/30 border-muted-foreground/20 hover:border-muted-foreground/40'
+                      }`}
                     style={{
-                      background: index > 2 ? `linear-gradient(135deg, ${rank.color}15, ${rank.color}05)` : undefined,
-                      borderColor: index > 2 ? `${rank.color}30` : undefined
+                      background: index > 2 ? `linear-gradient(135deg, ${rank.originalColor}15, ${rank.originalColor}05)` : undefined,
+                      borderColor: index > 2 ? `${rank.originalColor}30` : undefined
                     }}
                   >
                     {/* Rank position badge */}
                     <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-background border-2 border-current flex items-center justify-center font-bold text-sm shadow-lg">
                       {index + 1}
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         {/* Rank icon with glow effect */}
                         <div className="relative">
-                          <div 
+                          <div
                             className="text-4xl filter drop-shadow-lg"
-                            style={{ 
-                              filter: `drop-shadow(0 0 8px ${rank.color}50)` 
+                            style={{
+                              filter: `drop-shadow(0 0 8px ${rank.originalColor}50)`
                             }}
                           >
                             {rank.icon}
@@ -321,16 +323,16 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
                             {rank.icon}
                           </div>
                         </div>
-                        
+
                         <div className="space-y-1">
                           <div className="font-bold text-xl">{player.name}</div>
                           <div className="flex items-center gap-3">
-                            <span 
+                            <span
                               className="font-semibold text-sm px-2 py-1 rounded-full"
-                              style={{ 
-                                backgroundColor: `${rank.color}20`, 
-                                color: rank.color,
-                                border: `1px solid ${rank.color}40`
+                              style={{
+                                backgroundColor: `${rank.contrastSafeColor}20`,
+                                color: rank.contrastSafeColor,
+                                border: `1px solid ${rank.contrastSafeColor}40`
                               }}
                             >
                               {rank.name}
@@ -339,7 +341,7 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
                               {player.wins}W - {player.losses}L
                             </span>
                           </div>
-                          
+
                           {/* Progress bar for rank advancement */}
                           {rankProgress.nextRank && (
                             <div className="mt-2 space-y-1">
@@ -350,11 +352,11 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
                                 <span className="font-medium">{rankProgress.progress}%</span>
                               </div>
                               <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                                <div 
+                                <div
                                   className="h-full transition-all duration-500 rounded-full"
-                                  style={{ 
+                                  style={{
                                     width: `${rankProgress.progress}%`,
-                                    background: `linear-gradient(90deg, ${rank.color}, ${rankProgress.nextRank.color})`
+                                    background: `linear-gradient(90deg, ${rank.contrastSafeColor}, ${getRankColorForTheme(rankProgress.nextRank, isDark)})`
                                   }}
                                 />
                               </div>
@@ -362,16 +364,8 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
                           )}
                         </div>
                       </div>
-                      
-                      <div className="text-right space-y-1">
-                        <div className="text-3xl font-bold bg-gradient-to-r from-ping-pong to-table-green bg-clip-text text-transparent">
-                          {player.mmr}
-                        </div>
-                        <div className="text-sm text-muted-foreground font-medium">MMR</div>
-                        <div className="text-xs text-muted-foreground">
-                          Peak: {player.peakMmr}
-                        </div>
-                      </div>
+
+                      <MMRDisplay mmr={player.mmr} peakMmr={player.peakMmr} />
                     </div>
                   </div>
                 );

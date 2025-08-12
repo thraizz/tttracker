@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, User } from "lucide-react";
 import { Player } from "@/types/tournament";
-import { getRankByMmr, formatRankDisplay } from "@/utils/rankSystem";
+import { getRankByMmrWithContrast, formatRankDisplay } from "@/utils/rankSystem";
+import { useTheme } from "@/hooks/useTheme";
 
 interface PlayerManagementProps {
   players: Player[];
@@ -14,10 +15,11 @@ interface PlayerManagementProps {
 
 const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) => {
   const [newPlayerName, setNewPlayerName] = useState("");
+  const isDark = useTheme();
 
   const addPlayer = () => {
     if (!newPlayerName.trim()) return;
-    
+
     if (players.some(p => p.name.toLowerCase() === newPlayerName.toLowerCase())) {
       return; // Prevent duplicate names
     }
@@ -46,7 +48,7 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 m-4">
       {/* Add Player Form */}
       <div className="flex gap-2">
         <Input
@@ -56,7 +58,7 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
           onKeyPress={handleKeyPress}
           className="flex-1"
         />
-        <Button 
+        <Button
           onClick={addPlayer}
           disabled={!newPlayerName.trim()}
           className="bg-ping-pong hover:bg-ping-pong/90 text-white"
@@ -70,15 +72,15 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
       {players.length > 0 ? (
         <div className="grid gap-3">
           {players.map((player) => {
-            const rank = getRankByMmr(player.mmr);
+            const rank = getRankByMmrWithContrast(player.mmr, isDark);
             return (
               <Card key={player.id} className="p-4 flex items-center justify-between hover:shadow-md transition-all duration-200 hover:scale-[1.01]">
                 <div className="flex items-center gap-3">
-                  <div 
+                  <div
                     className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${rank.color}, ${rank.color}AA)`,
-                      boxShadow: `0 4px 12px ${rank.color}30`
+                    style={{
+                      background: `linear-gradient(135deg, ${rank.originalColor}, ${rank.originalColor}AA)`,
+                      boxShadow: `0 4px 12px ${rank.originalColor}30`
                     }}
                   >
                     {rank.icon}
@@ -86,13 +88,13 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
                   <div>
                     <h4 className="font-semibold text-lg">{player.name}</h4>
                     <div className="flex gap-2 mt-1">
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className="text-xs font-medium"
                         style={{
-                          backgroundColor: `${rank.color}20`,
-                          color: rank.color,
-                          border: `1px solid ${rank.color}40`
+                          backgroundColor: `${rank.contrastSafeColor}20`,
+                          color: rank.contrastSafeColor,
+                          border: `1px solid ${rank.contrastSafeColor}40`
                         }}
                       >
                         {rank.name}
@@ -106,7 +108,7 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
                     </div>
                   </div>
                 </div>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"

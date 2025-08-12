@@ -36,7 +36,7 @@ const Index = () => {
         peakMmr: player.peakMmr || player.mmr || 1000
       }));
       setPlayers(playersWithMmr);
-      
+
       // Load the active tournament from room tournaments
       const activeTournament = currentRoom.tournaments.find(t => t.status === 'active');
       if (activeTournament) {
@@ -46,7 +46,7 @@ const Index = () => {
         setCurrentTournament(null);
         setView('setup');
       }
-      
+
       setMmrMatches(currentRoom.mmrMatches || []);
     } else {
       // Reset state when no room is selected
@@ -71,14 +71,14 @@ const Index = () => {
 
   const handleUpdatePlayers = async (updatedPlayers: Player[]) => {
     if (!currentRoom) return;
-    
+
     // Ensure all players have MMR fields when updated
     const playersWithMmr = updatedPlayers.map(player => ({
       ...player,
       mmr: player.mmr || 1000,
       peakMmr: player.peakMmr || player.mmr || 1000
     }));
-    
+
     try {
       await updateRoom(currentRoom.id, { players: playersWithMmr });
       setPlayers(playersWithMmr);
@@ -159,9 +159,9 @@ const Index = () => {
 
   const resetTournament = async () => {
     if (!currentRoom || !currentTournament) return;
-    
+
     try {
-      const updatedTournaments = currentRoom.tournaments.map(t => 
+      const updatedTournaments = currentRoom.tournaments.map(t =>
         t.id === currentTournament.id ? { ...t, status: 'completed' as const } : t
       );
       await updateRoom(currentRoom.id, { tournaments: updatedTournaments });
@@ -218,7 +218,7 @@ const Index = () => {
               </Link>
             </div>
           </div>
-          
+
           <Card className="p-6">
             <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Room</h2>
             <RoomManager />
@@ -228,8 +228,41 @@ const Index = () => {
     );
   }
 
+  // Create sidebar content
+  const sidebarContent = (
+    <PlayerSidebar
+      players={players}
+      onUpdatePlayers={handleUpdatePlayers}
+      activeTab={activeTab}
+      onAddMatch={(match) => setMmrMatches([...mmrMatches, match])}
+    />
+  );
+
+  // Create quick actions based on current state
+  const quickActions = (
+    <div className="space-y-2">
+      {activeTab === 'tournament' && players.length >= 2 && !currentTournament && (
+        <Button
+          onClick={startTournament}
+          size="sm"
+          className="w-full bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold"
+        >
+          <Trophy className="w-4 h-4 mr-2" />
+          Start Tournament
+        </Button>
+      )}
+
+      {activeTab === 'mmr' && players.length >= 2 && (
+        <Button size="sm" className="w-full" variant="outline">
+          <Target className="w-4 h-4 mr-2" />
+          Quick Match
+        </Button>
+      )}
+    </div>
+  );
+
   // Handle tournament bracket view within the layout
-  if (view === 'tournament' && currentTournament) {
+  if (view === 'tournament' && currentTournament && activeTab === 'tournament') {
     return (
       <AppLayout
         currentRoom={currentRoom}
@@ -250,39 +283,6 @@ const Index = () => {
     );
   }
 
-  // Create sidebar content
-  const sidebarContent = (
-    <PlayerSidebar
-      players={players}
-      onUpdatePlayers={handleUpdatePlayers}
-      activeTab={activeTab}
-      onAddMatch={(match) => setMmrMatches([...mmrMatches, match])}
-    />
-  );
-
-  // Create quick actions based on current state
-  const quickActions = (
-    <div className="space-y-2">
-      {activeTab === 'tournament' && players.length >= 2 && !currentTournament && (
-        <Button 
-          onClick={startTournament}
-          size="sm"
-          className="w-full bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold"
-        >
-          <Trophy className="w-4 h-4 mr-2" />
-          Start Tournament
-        </Button>
-      )}
-      
-      {activeTab === 'mmr' && players.length >= 2 && (
-        <Button size="sm" className="w-full" variant="outline">
-          <Target className="w-4 h-4 mr-2" />
-          Quick Match
-        </Button>
-      )}
-    </div>
-  );
-
   const renderMainContent = () => {
     if (activeTab === 'tournament') {
       if (players.length < 2) {
@@ -294,7 +294,7 @@ const Index = () => {
           </Card>
         );
       }
-      
+
       if (!currentTournament) {
         return (
           <Card className="p-8 bg-gradient-to-r from-table-green/5 to-secondary/5 border-table-green/20">
@@ -304,7 +304,7 @@ const Index = () => {
               <p className="text-muted-foreground text-lg mb-8">
                 {players.length} players registered. Create a single-elimination bracket!
               </p>
-              <Button 
+              <Button
                 onClick={startTournament}
                 size="lg"
                 className="bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold px-8 py-3 text-lg"
@@ -317,10 +317,10 @@ const Index = () => {
         );
       }
     }
-    
+
     if (activeTab === 'mmr') {
       return (
-        <MMRModeContent 
+        <MMRModeContent
           players={players}
           onUpdatePlayers={handleUpdatePlayers}
           mmrMatches={mmrMatches}
@@ -328,7 +328,7 @@ const Index = () => {
         />
       );
     }
-    
+
     return null;
   };
 
@@ -344,7 +344,7 @@ const Index = () => {
       quickActions={quickActions}
     >
       {renderMainContent()}
-      
+
       {/* Legacy Data Migration Dialog */}
       <LegacyDataMigrationDialog
         open={migrationDialogOpen}

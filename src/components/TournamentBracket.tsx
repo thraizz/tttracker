@@ -134,11 +134,6 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
       <div className="space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={onReset} className="text-muted-foreground">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Setup
-          </Button>
-
           <div className="text-center">
             <div className="flex items-center justify-center gap-3 mb-2">
               <Trophy className="w-8 h-8 text-ping-pong" />
