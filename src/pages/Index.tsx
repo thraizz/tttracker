@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { Plus, Trophy, Users, Target, Settings } from "lucide-react";
 import { RoomManager } from "@/components/RoomManager";
+import { UserAvatar } from "@/components/UserAvatar";
 import PlayerManagement from "@/components/PlayerManagement";
 import TournamentBracket from "@/components/TournamentBracket";
 import MMRMode from "@/components/MMRMode";
@@ -188,7 +189,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-soft-gray to-background">
         <div className="container max-w-4xl mx-auto py-8 px-4">
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 relative">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-ping-pong to-victory-gold flex items-center justify-center">
                 <Trophy className="w-6 h-6 text-white" />
@@ -200,6 +201,22 @@ const Index = () => {
             <p className="text-muted-foreground text-lg mb-8">
               Tournament brackets and MMR tracking for your table tennis group
             </p>
+
+            {/* User Avatar and Settings */}
+            <div className="absolute top-0 right-0 flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <UserAvatar size="sm" />
+                <span className="text-sm text-muted-foreground hidden sm:inline">
+                  {user && !user.isAnonymous ? user.displayName || user.email : 'Anonymous'}
+                </span>
+              </div>
+              <Link to="/settings">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden sm:inline">Settings</span>
+                </Button>
+              </Link>
+            </div>
           </div>
           
           <Card className="p-6">
@@ -238,12 +255,18 @@ const Index = () => {
             Tournament brackets and MMR tracking for your table tennis group
           </p>
           
-          {/* Settings Button */}
-          <div className="absolute top-0 right-0">
+          {/* User Avatar and Settings */}
+          <div className="absolute top-0 right-0 flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <UserAvatar size="sm" />
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {user && !user.isAnonymous ? user.displayName || user.email : 'Anonymous'}
+              </span>
+            </div>
             <Link to="/settings">
               <Button variant="outline" size="sm" className="gap-2">
                 <Settings className="h-4 w-4" />
-                Settings
+                <span className="hidden sm:inline">Settings</span>
               </Button>
             </Link>
           </div>

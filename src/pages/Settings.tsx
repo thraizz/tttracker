@@ -10,7 +10,7 @@ import { useRoom } from '@/contexts/RoomContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateRoom } from '@/services/roomService';
 import { Player, Tournament, MMRMatch } from '@/types/tournament';
-import { Download, Upload, FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Download, Upload, FileText, AlertTriangle, ArrowLeft, User, LogIn, LogOut, Chrome } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface LegacyData {
@@ -22,13 +22,49 @@ interface LegacyData {
 }
 
 export const Settings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAnonymous, signInWithGoogle, signOut } = useAuth();
   const { currentRoom, createNewRoom } = useRoom();
   const { toast } = useToast();
   
   const [importData, setImportData] = useState('');
   const [importing, setImporting] = useState(false);
   const [roomNameForImport, setRoomNameForImport] = useState('Imported Data Room');
+  const [signingIn, setSigningIn] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setSigningIn(true);
+    try {
+      await signInWithGoogle();
+      toast({ 
+        title: 'Success', 
+        description: 'Successfully signed in with Google!' 
+      });
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to sign in with Google. Please try again.',
+        variant: 'destructive' 
+      });
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({ 
+        title: 'Success', 
+        description: 'Successfully signed out!' 
+      });
+    } catch (error) {
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to sign out. Please try again.',
+        variant: 'destructive' 
+      });
+    }
+  };
 
   const exportCurrentRoomData = () => {
     if (!currentRoom) {
@@ -197,9 +233,86 @@ export const Settings: React.FC = () => {
           </div>
           <h1 className="text-3xl font-bold mb-2">Settings</h1>
           <p className="text-muted-foreground">
-            Manage your data export and import settings
+            Manage your account, data export and import settings
           </p>
         </div>
+
+        {/* Account & Authentication */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Account & Data Persistence
+            </CardTitle>
+            <CardDescription>
+              Sign in with Google to sync your data across devices and keep it safe
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {user && !isAnonymous ? (
+              // Signed in with Google
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex-shrink-0">
+                    {user.photoURL ? (
+                      <img 
+                        src={user.photoURL} 
+                        alt="Profile" 
+                        className="w-10 h-10 rounded-full border-2 border-green-300"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                        <User className="w-5 h-5 text-green-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-green-900">
+                      Signed in as {user.displayName || user.email}
+                    </p>
+                    <p className="text-sm text-green-700">
+                      Your data is automatically saved and synced across devices
+                    </p>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={handleSignOut}
+                  variant="outline" 
+                  className="gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              // Anonymous or not signed in
+              <div className="space-y-4">
+                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-amber-900 mb-1">
+                      Using Anonymous Mode
+                    </p>
+                    <p className="text-sm text-amber-700">
+                      Your data is only stored locally and may be lost if you clear your browser data or switch devices.
+                      Sign in with Google to sync your data across devices and keep it safe.
+                    </p>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={handleGoogleSignIn}
+                  disabled={signingIn}
+                  className="gap-2 bg-blue-600 hover:bg-blue-700"
+                >
+                  <Chrome className="h-4 w-4" />
+                  {signingIn ? 'Signing in...' : 'Sign in with Google'}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Export Current Room Data */}
         <Card className="mb-6">
