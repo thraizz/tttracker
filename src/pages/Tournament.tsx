@@ -154,7 +154,6 @@ const Tournament = () => {
     <PlayerSidebar
       players={players}
       onUpdatePlayers={handleUpdatePlayers}
-      activeTab="tournament"
       onAddMatch={(match) => setMmrMatches([...mmrMatches, match])}
     />
   );
@@ -181,8 +180,6 @@ const Tournament = () => {
       <AppLayout
         currentRoom={currentRoom}
         players={players}
-        activeTab="tournament"
-        onTabChange={() => {}}
         currentTournament={currentTournament}
         mmrMatches={mmrMatches}
         sidebarContent={sidebarContent}
@@ -237,8 +234,6 @@ const Tournament = () => {
     <AppLayout
       currentRoom={currentRoom}
       players={players}
-      activeTab="tournament"
-      onTabChange={() => {}}
       currentTournament={currentTournament}
       mmrMatches={mmrMatches}
       sidebarContent={sidebarContent}

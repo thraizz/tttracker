@@ -53,7 +53,6 @@ const MMR = () => {
     <PlayerSidebar
       players={players}
       onUpdatePlayers={handleUpdatePlayers}
-      activeTab="mmr"
       onAddMatch={(match) => setMmrMatches([...mmrMatches, match])}
     />
   );
@@ -74,8 +73,6 @@ const MMR = () => {
     <AppLayout
       currentRoom={currentRoom}
       players={players}
-      activeTab="mmr"
-      onTabChange={() => {}}
       currentTournament={null}
       mmrMatches={mmrMatches}
       sidebarContent={sidebarContent}

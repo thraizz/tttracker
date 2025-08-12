@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,6 @@ import { getRankByMmr } from "@/utils/rankSystem";
 interface PlayerSidebarProps {
   players: Player[];
   onUpdatePlayers: (players: Player[]) => void;
-  activeTab: 'tournament' | 'mmr';
   quickActions?: React.ReactNode;
   onAddMatch?: (match: MMRMatch) => void;
 }
@@ -20,11 +20,14 @@ interface PlayerSidebarProps {
 export const PlayerSidebar = ({
   players,
   onUpdatePlayers,
-  activeTab,
   quickActions,
   onAddMatch
 }: PlayerSidebarProps) => {
+  const location = useLocation();
   const [playerManagementOpen, setPlayerManagementOpen] = useState(false);
+
+  // Determine current tab based on route
+  const activeTab = location.pathname === '/mmr' ? 'mmr' : 'tournament';
 
   const topPlayers = [...players]
     .sort((a, b) => b.mmr - a.mmr)

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Trophy,
   Target,
@@ -23,8 +23,6 @@ import { useAuth } from "@/contexts/AuthContext";
 interface AppLayoutProps {
   currentRoom: Room | null;
   players: Player[];
-  activeTab: 'tournament' | 'mmr';
-  onTabChange?: (tab: 'tournament' | 'mmr') => void;
   currentTournament?: Tournament | null;
   mmrMatches: MMRMatch[];
   children: React.ReactNode;
@@ -35,8 +33,6 @@ interface AppLayoutProps {
 export const AppLayout = ({
   currentRoom,
   players,
-  activeTab,
-  onTabChange,
   currentTournament,
   mmrMatches,
   children,
@@ -45,16 +41,19 @@ export const AppLayout = ({
 }: AppLayoutProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Determine current tab based on route
+  const getCurrentTab = (): 'tournament' | 'mmr' => {
+    if (location.pathname === '/mmr') return 'mmr';
+    return 'tournament'; // default to tournament for root and /tournament
+  };
+
   // Handle tab changes via navigation
   const handleTabChange = (tab: 'tournament' | 'mmr') => {
-    if (onTabChange) {
-      onTabChange(tab);
-    } else {
-      navigate(`/${tab}`);
-    }
+    navigate(`/${tab}`);
   };
 
   const getActivitySummary = () => {
@@ -122,7 +121,7 @@ export const AppLayout = ({
               />
 
               {currentRoom && (
-                <Tabs value={activeTab} onValueChange={handleTabChange}>
+                <Tabs value={getCurrentTab()} onValueChange={handleTabChange}>
                   <TabsList className="grid grid-cols-2">
                     <TabsTrigger value="tournament" className="flex items-center gap-2">
                       <Trophy className="w-4 h-4" />
