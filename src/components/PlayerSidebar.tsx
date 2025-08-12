@@ -127,17 +127,30 @@ export const PlayerSidebar = ({
       </div>
 
       {/* Quick Actions Section */}
-      {quickActions && (
-        <div className="mt-auto p-4 border-t">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Target className="w-4 h-4 text-ping-pong" />
-              <span className="font-medium text-sm">Quick Actions</span>
-            </div>
-            {quickActions}
+      <div className="mt-auto p-4 border-t">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Target className="w-4 h-4 text-ping-pong" />
+            <span className="font-medium text-sm">Quick Actions</span>
           </div>
+          
+          {activeTab === 'mmr' && players.length >= 2 && onAddMatch && (
+            <MatchRecordModal
+              players={players}
+              onUpdatePlayers={onUpdatePlayers}
+              onAddMatch={onAddMatch}
+              trigger={
+                <Button size="sm" className="w-full">
+                  <Target className="w-4 h-4 mr-2" />
+                  Quick Match
+                </Button>
+              }
+            />
+          )}
+          
+          {quickActions}
         </div>
-      )}
+      </div>
     </div>
   );
 };

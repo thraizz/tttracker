@@ -17,6 +17,7 @@ import {
   Clock
 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { RoomSwitcherModal } from "@/components/RoomSwitcherModal";
 import { Player, Tournament, MMRMatch } from "@/types/tournament";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoom } from "@/contexts/RoomContext";
@@ -98,29 +99,33 @@ export const AppLayout = ({
 
             {/* Center: Room + Mode Navigation */}
             <div className="flex items-center gap-6">
-              {currentRoom && (
-                <>
-                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full">
+              <RoomSwitcherModal 
+                trigger={
+                  <Button variant="ghost" className="flex items-center gap-2 px-3 py-1.5">
                     <Users className="w-4 h-4 text-ping-pong" />
-                    <span className="text-sm font-medium">{currentRoom.name}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {players.length}
-                    </Badge>
-                  </div>
+                    <span className="text-sm font-medium">{currentRoom?.name || 'Select Room'}</span>
+                    {currentRoom && (
+                      <Badge variant="secondary" className="text-xs">
+                        {players.length}
+                      </Badge>
+                    )}
+                  </Button>
+                }
+              />
 
-                  <Tabs value={activeTab} onValueChange={onTabChange}>
-                    <TabsList className="grid grid-cols-2">
-                      <TabsTrigger value="tournament" className="flex items-center gap-2">
-                        <Trophy className="w-4 h-4" />
-                        <span className="hidden sm:inline">Tournament</span>
-                      </TabsTrigger>
-                      <TabsTrigger value="mmr" className="flex items-center gap-2">
-                        <Target className="w-4 h-4" />
-                        <span className="hidden sm:inline">MMR</span>
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </>
+              {currentRoom && (
+                <Tabs value={activeTab} onValueChange={onTabChange}>
+                  <TabsList className="grid grid-cols-2">
+                    <TabsTrigger value="tournament" className="flex items-center gap-2">
+                      <Trophy className="w-4 h-4" />
+                      <span className="hidden sm:inline">Tournament</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="mmr" className="flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      <span className="hidden sm:inline">MMR</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               )}
             </div>
 

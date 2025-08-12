@@ -8,7 +8,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { AppLayout } from "@/components/AppLayout";
 import { PlayerSidebar } from "@/components/PlayerSidebar";
 import TournamentBracket from "@/components/TournamentBracket";
-import MMRMode from "@/components/MMRMode";
+import { MMRModeContent } from "@/components/MMRModeContent";
 import { Player, Match, Tournament, MMRMatch } from "@/types/tournament";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoom } from "@/contexts/RoomContext";
@@ -256,6 +256,7 @@ const Index = () => {
       players={players}
       onUpdatePlayers={handleUpdatePlayers}
       activeTab={activeTab}
+      onAddMatch={(match) => setMmrMatches([...mmrMatches, match])}
     />
   );
 
@@ -319,7 +320,7 @@ const Index = () => {
     
     if (activeTab === 'mmr') {
       return (
-        <MMRMode 
+        <MMRModeContent 
           players={players}
           onUpdatePlayers={handleUpdatePlayers}
           mmrMatches={mmrMatches}
