@@ -80,14 +80,13 @@ This project is built with modern web technologies:
 - **State Management**: React useState with localStorage persistence
 - **Package Manager**: Bun (with npm/yarn compatibility)
 
-## How can I deploy this project?
+## 🚀 Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/12710f8d-d2d8-4f2d-8ac3-cb5bdf4460e1) and click on Share -> Publish.
+To deploy this project, you can use any static hosting service such as:
 
-## Can I connect a custom domain to my Lovable project?
+- **Vercel**: Connect your repository and deploy automatically
+- **Netlify**: Drag and drop the `dist` folder after running `npm run build`
+- **GitHub Pages**: Use GitHub Actions to deploy from your repository
+- **Surge.sh**: Simple command-line deployment with `npm install -g surge && surge dist`
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Build the project first with `npm run build`, then deploy the contents of the `dist` directory.
