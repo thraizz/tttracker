@@ -17,7 +17,7 @@ export const RoomSwitcherModal = ({
   open,
   onOpenChange
 }: RoomSwitcherModalProps) => {
-  const { rooms, currentRoom } = useRoom();
+  const { userRooms, currentRoom } = useRoom();
 
   const defaultTrigger = (
     <Button variant="outline" size="sm">
@@ -61,8 +61,8 @@ export const RoomSwitcherModal = ({
           )}
 
           <RoomManager />
-          
-          {rooms.length === 0 && (
+
+          {userRooms.length === 0 && (
             <div className="text-center py-8">
               <Plus className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-medium mb-2">No Rooms Available</h3>

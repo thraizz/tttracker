@@ -35,12 +35,12 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
 
   const refreshRooms = useCallback(async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const rooms = await getUserRooms(user.uid);
       setUserRooms(rooms);
-      
+
       // If no current room and user has rooms, set the first one as current
       if (!currentRoom && rooms.length > 0) {
         setCurrentRoom(rooms[0]);
@@ -54,7 +54,7 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
 
   const createNewRoom = async (name: string, description?: string): Promise<string> => {
     if (!user) throw new Error('User must be authenticated');
-    
+
     const roomData = {
       name,
       description: description || '',
@@ -68,7 +68,7 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
         requireApproval: false
       }
     };
-    
+
     const roomId = await createRoom(roomData, user.uid);
     await refreshRooms();
     return roomId;
@@ -76,7 +76,7 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
 
   const joinRoomById = async (roomId: string): Promise<void> => {
     if (!user) throw new Error('User must be authenticated');
-    
+
     await joinRoom(roomId, user.uid);
     await refreshRooms();
   };
@@ -90,12 +90,12 @@ export const RoomProvider: React.FC<RoomProviderProps> = ({ children }) => {
   // Subscribe to current room updates
   useEffect(() => {
     if (!currentRoom) return;
-    
+
     const unsubscribe = subscribeToRoom(currentRoom.id, (updatedRoom) => {
       if (updatedRoom) {
         setCurrentRoom(updatedRoom);
         // Update in userRooms as well
-        setUserRooms(prev => 
+        setUserRooms(prev =>
           prev.map(room => room.id === updatedRoom.id ? updatedRoom : room)
         );
       }
