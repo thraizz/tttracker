@@ -10,6 +10,7 @@ import { Target, Trophy, History, TrendingUp, TrendingDown, Plus, Users } from "
 import { Player, MMRMatch } from "@/types/tournament";
 import { useRoom } from "@/contexts/RoomContext";
 import { updateRoom } from "@/services/roomService";
+import { getRankByMmr, getRankProgress, formatRankDisplay } from "@/utils/rankSystem";
 
 interface MMRModeProps {
   players: Player[];
@@ -194,11 +195,18 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
                       <SelectValue placeholder="Select player 1" />
                     </SelectTrigger>
                     <SelectContent>
-                      {players.map(player => (
-                        <SelectItem key={player.id} value={player.id}>
-                          {player.name} (MMR: {player.mmr})
-                        </SelectItem>
-                      ))}
+                      {players.map(player => {
+                        const rank = getRankByMmr(player.mmr);
+                        return (
+                          <SelectItem key={player.id} value={player.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{rank.icon}</span>
+                              <span>{player.name}</span>
+                              <span className="text-muted-foreground">({player.mmr} MMR)</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -222,11 +230,18 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
                       <SelectValue placeholder="Select player 2" />
                     </SelectTrigger>
                     <SelectContent>
-                      {players.filter(p => p.id !== selectedPlayer1).map(player => (
-                        <SelectItem key={player.id} value={player.id}>
-                          {player.name} (MMR: {player.mmr})
-                        </SelectItem>
-                      ))}
+                      {players.filter(p => p.id !== selectedPlayer1).map(player => {
+                        const rank = getRankByMmr(player.mmr);
+                        return (
+                          <SelectItem key={player.id} value={player.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{rank.icon}</span>
+                              <span>{player.name}</span>
+                              <span className="text-muted-foreground">({player.mmr} MMR)</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -265,30 +280,102 @@ const MMRMode = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModePr
             </div>
 
             <div className="space-y-4">
-              {leaderboard.map((player, index) => (
-                <div
-                  key={player.id}
-                  className={`flex items-center justify-between p-4 rounded-lg border ${
-                    index === 0 ? 'bg-victory-gold/10 border-victory-gold/30' : 'bg-muted/30'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl font-bold w-12 text-center">
-                      {getRankIcon(index)}
+              {leaderboard.map((player, index) => {
+                const rank = getRankByMmr(player.mmr);
+                const rankProgress = getRankProgress(player.mmr);
+                return (
+                  <div
+                    key={player.id}
+                    className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+                      index === 0 
+                        ? 'bg-gradient-to-r from-victory-gold/20 via-victory-gold/10 to-victory-gold/20 border-victory-gold/50 shadow-lg' 
+                        : index === 1
+                        ? 'bg-gradient-to-r from-gray-300/20 via-gray-300/10 to-gray-300/20 border-gray-300/50 shadow-md'
+                        : index === 2
+                        ? 'bg-gradient-to-r from-amber-600/20 via-amber-600/10 to-amber-600/20 border-amber-600/50 shadow-md'
+                        : 'bg-gradient-to-r from-muted/50 to-muted/30 border-muted-foreground/20 hover:border-muted-foreground/40'
+                    }`}
+                    style={{
+                      background: index > 2 ? `linear-gradient(135deg, ${rank.color}15, ${rank.color}05)` : undefined,
+                      borderColor: index > 2 ? `${rank.color}30` : undefined
+                    }}
+                  >
+                    {/* Rank position badge */}
+                    <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-background border-2 border-current flex items-center justify-center font-bold text-sm shadow-lg">
+                      {index + 1}
                     </div>
-                    <div>
-                      <div className="font-semibold text-lg">{player.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {player.wins}W - {player.losses}L • Peak: {player.peakMmr}
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        {/* Rank icon with glow effect */}
+                        <div className="relative">
+                          <div 
+                            className="text-4xl filter drop-shadow-lg"
+                            style={{ 
+                              filter: `drop-shadow(0 0 8px ${rank.color}50)` 
+                            }}
+                          >
+                            {rank.icon}
+                          </div>
+                          <div className="absolute inset-0 text-4xl animate-pulse opacity-30">
+                            {rank.icon}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="font-bold text-xl">{player.name}</div>
+                          <div className="flex items-center gap-3">
+                            <span 
+                              className="font-semibold text-sm px-2 py-1 rounded-full"
+                              style={{ 
+                                backgroundColor: `${rank.color}20`, 
+                                color: rank.color,
+                                border: `1px solid ${rank.color}40`
+                              }}
+                            >
+                              {rank.name}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {player.wins}W - {player.losses}L
+                            </span>
+                          </div>
+                          
+                          {/* Progress bar for rank advancement */}
+                          {rankProgress.nextRank && (
+                            <div className="mt-2 space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">
+                                  Progress to {rankProgress.nextRank.name}
+                                </span>
+                                <span className="font-medium">{rankProgress.progress}%</span>
+                              </div>
+                              <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full transition-all duration-500 rounded-full"
+                                  style={{ 
+                                    width: `${rankProgress.progress}%`,
+                                    background: `linear-gradient(90deg, ${rank.color}, ${rankProgress.nextRank.color})`
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="text-right space-y-1">
+                        <div className="text-3xl font-bold bg-gradient-to-r from-ping-pong to-table-green bg-clip-text text-transparent">
+                          {player.mmr}
+                        </div>
+                        <div className="text-sm text-muted-foreground font-medium">MMR</div>
+                        <div className="text-xs text-muted-foreground">
+                          Peak: {player.peakMmr}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-ping-pong">{player.mmr}</div>
-                    <div className="text-sm text-muted-foreground">MMR</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         </TabsContent>

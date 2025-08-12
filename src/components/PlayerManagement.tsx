@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, User } from "lucide-react";
 import { Player } from "@/types/tournament";
+import { getRankByMmr, formatRankDisplay } from "@/utils/rankSystem";
 
 interface PlayerManagementProps {
   players: Player[];
@@ -68,35 +69,55 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
       {/* Players List */}
       {players.length > 0 ? (
         <div className="grid gap-3">
-          {players.map((player) => (
-            <Card key={player.id} className="p-4 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-table-green to-secondary flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-medium">{player.name}</h4>
-                  <div className="flex gap-2 mt-1">
-                    <Badge variant="secondary" className="text-xs">
-                      {player.wins}W - {player.losses}L
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      MMR: {player.mmr}
-                    </Badge>
+          {players.map((player) => {
+            const rank = getRankByMmr(player.mmr);
+            return (
+              <Card key={player.id} className="p-4 flex items-center justify-between hover:shadow-md transition-all duration-200 hover:scale-[1.01]">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${rank.color}, ${rank.color}AA)`,
+                      boxShadow: `0 4px 12px ${rank.color}30`
+                    }}
+                  >
+                    {rank.icon}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-lg">{player.name}</h4>
+                    <div className="flex gap-2 mt-1">
+                      <Badge 
+                        variant="secondary" 
+                        className="text-xs font-medium"
+                        style={{
+                          backgroundColor: `${rank.color}20`,
+                          color: rank.color,
+                          border: `1px solid ${rank.color}40`
+                        }}
+                      >
+                        {rank.name}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {player.wins}W - {player.losses}L
+                      </Badge>
+                      <Badge variant="outline" className="text-xs font-medium">
+                        {player.mmr} MMR
+                      </Badge>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removePlayer(player.id)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </Card>
-          ))}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removePlayer(player.id)}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-8 text-muted-foreground">
