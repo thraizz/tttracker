@@ -25,7 +25,9 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
       id: Date.now().toString(),
       name: newPlayerName.trim(),
       wins: 0,
-      losses: 0
+      losses: 0,
+      mmr: 1000,
+      peakMmr: 1000
     };
 
     onUpdatePlayers([...players, newPlayer]);
@@ -77,6 +79,9 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
                   <div className="flex gap-2 mt-1">
                     <Badge variant="secondary" className="text-xs">
                       {player.wins}W - {player.losses}L
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      MMR: {player.mmr}
                     </Badge>
                   </div>
                 </div>
