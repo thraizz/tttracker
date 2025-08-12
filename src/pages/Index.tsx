@@ -12,15 +12,19 @@ import { Player, Match, Tournament, MMRMatch } from "@/types/tournament";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRoom } from "@/contexts/RoomContext";
 import { updateRoom } from "@/services/roomService";
+import { useLegacyDataMigration } from "@/hooks/useLegacyDataMigration";
+import { LegacyDataMigrationDialog } from "@/components/LegacyDataMigrationDialog";
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
-  const { currentRoom, loading: roomLoading } = useRoom();
+  const { currentRoom, loading: roomLoading, refreshRooms } = useRoom();
+  const { hasLegacyData, legacyData, migrationChecked, clearLegacyData, markMigrationDismissed } = useLegacyDataMigration();
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentTournament, setCurrentTournament] = useState<Tournament | null>(null);
   const [view, setView] = useState<'setup' | 'tournament'>('setup');
   const [mmrMatches, setMmrMatches] = useState<MMRMatch[]>([]);
   const [activeTab, setActiveTab] = useState<'tournament' | 'mmr'>('tournament');
+  const [migrationDialogOpen, setMigrationDialogOpen] = useState(false);
 
   // Load data from current room
   useEffect(() => {
@@ -51,6 +55,18 @@ const Index = () => {
       setMmrMatches([]);
     }
   }, [currentRoom]);
+
+  // Show migration dialog when legacy data is detected and no current room
+  useEffect(() => {
+    if (migrationChecked && hasLegacyData && !currentRoom && !roomLoading && !authLoading) {
+      setMigrationDialogOpen(true);
+    }
+  }, [migrationChecked, hasLegacyData, currentRoom, roomLoading, authLoading]);
+
+  const handleMigrationComplete = async () => {
+    clearLegacyData();
+    await refreshRooms();
+  };
 
   const handleUpdatePlayers = async (updatedPlayers: Player[]) => {
     if (!currentRoom) return;
@@ -310,6 +326,15 @@ const Index = () => {
             />
           </TabsContent>
         </Tabs>
+
+        {/* Legacy Data Migration Dialog */}
+        <LegacyDataMigrationDialog
+          open={migrationDialogOpen}
+          onOpenChange={setMigrationDialogOpen}
+          legacyData={legacyData || {}}
+          onMigrationComplete={handleMigrationComplete}
+          onDismiss={markMigrationDismissed}
+        />
       </div>
     </div>
   );
