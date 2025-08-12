@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { Plus, Trophy, Users, Target, Settings } from "lucide-react";
 import { RoomManager } from "@/components/RoomManager";
 import { UserAvatar } from "@/components/UserAvatar";
-import PlayerManagement from "@/components/PlayerManagement";
+import { AppLayout } from "@/components/AppLayout";
+import { PlayerSidebar } from "@/components/PlayerSidebar";
 import TournamentBracket from "@/components/TournamentBracket";
 import MMRMode from "@/components/MMRMode";
 import { Player, Match, Tournament, MMRMatch } from "@/types/tournament";
@@ -228,138 +228,131 @@ const Index = () => {
     );
   }
 
+  // Handle tournament bracket view within the layout
   if (view === 'tournament' && currentTournament) {
     return (
-      <TournamentBracket
-        tournament={currentTournament}
-        onUpdateTournament={setCurrentTournament}
-        onReset={resetTournament}
-      />
+      <AppLayout
+        currentRoom={currentRoom}
+        players={players}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        currentTournament={currentTournament}
+        mmrMatches={mmrMatches}
+        sidebarContent={sidebarContent}
+        quickActions={quickActions}
+      >
+        <TournamentBracket
+          tournament={currentTournament}
+          onUpdateTournament={setCurrentTournament}
+          onReset={resetTournament}
+        />
+      </AppLayout>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-soft-gray to-background">
-      <div className="container max-w-6xl mx-auto py-8 px-4">
-        {/* Header */}
-        <div className="text-center mb-8 relative">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-ping-pong to-victory-gold flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-ping-pong to-victory-gold bg-clip-text text-transparent">
-              TTTracker
-            </h1>
-          </div>
-          <p className="text-muted-foreground text-lg">
-            Tournament brackets and MMR tracking for your table tennis group
-          </p>
-          
-          {/* User Avatar and Settings */}
-          <div className="absolute top-0 right-0 flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <UserAvatar size="sm" />
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                {user && !user.isAnonymous ? user.displayName || user.email : 'Anonymous'}
-              </span>
-            </div>
-            <Link to="/settings">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Settings</span>
-              </Button>
-            </Link>
-          </div>
-        </div>
+  // Create sidebar content
+  const sidebarContent = (
+    <PlayerSidebar
+      players={players}
+      onUpdatePlayers={handleUpdatePlayers}
+      activeTab={activeTab}
+    />
+  );
 
-        {/* Room Management */}
-        <Card className="p-6 mb-8" style={{ boxShadow: 'var(--shadow-tournament)' }}>
-          <div className="flex items-center gap-3 mb-6">
-            <Users className="w-5 h-5 text-ping-pong" />
-            <h2 className="text-2xl font-semibold">Room</h2>
-          </div>
-          <RoomManager />
-        </Card>
-
-        {/* Mode Selection Tabs */}
-        <Tabs value={activeTab} onValueChange={(value: 'tournament' | 'mmr') => setActiveTab(value)} className="space-y-8">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-            <TabsTrigger value="tournament" className="flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              Tournament
-            </TabsTrigger>
-            <TabsTrigger value="mmr" className="flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              MMR Mode
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Player Management Section */}
-          <Card className="p-6" style={{ boxShadow: 'var(--shadow-tournament)' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <Users className="w-5 h-5 text-ping-pong" />
-              <h2 className="text-2xl font-semibold">Players</h2>
-              <div className="ml-auto bg-ping-pong/10 text-ping-pong px-3 py-1 rounded-full text-sm font-medium">
-                {players.length} registered
-              </div>
-            </div>
-            
-            <PlayerManagement players={players} onUpdatePlayers={handleUpdatePlayers} />
-          </Card>
-
-          <TabsContent value="tournament" className="space-y-8">
-            {/* Start Tournament */}
-            {players.length >= 2 && (
-              <Card className="p-6 bg-gradient-to-r from-table-green/5 to-secondary/5 border-table-green/20">
-                <div className="text-center">
-                  <Trophy className="w-12 h-12 text-table-green mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Ready to Start Tournament!</h3>
-                  <p className="text-muted-foreground mb-6">
-                    {players.length} players registered. Create a single-elimination bracket!
-                  </p>
-                  <Button 
-                    onClick={startTournament}
-                    size="lg"
-                    className="bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold px-8"
-                  >
-                    <Trophy className="w-5 h-5 mr-2" />
-                    Start Tournament
-                  </Button>
-                </div>
-              </Card>
-            )}
-
-            {players.length < 2 && (
-              <Card className="p-6 border-dashed border-2 border-muted">
-                <div className="text-center text-muted-foreground">
-                  <Plus className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Add Players to Begin</h3>
-                  <p>You need at least 2 players to start a tournament</p>
-                </div>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="mmr" className="space-y-8">
-            <MMRMode 
-              players={players}
-              onUpdatePlayers={handleUpdatePlayers}
-              mmrMatches={mmrMatches}
-              onAddMatch={(match) => setMmrMatches([...mmrMatches, match])}
-            />
-          </TabsContent>
-        </Tabs>
-
-        {/* Legacy Data Migration Dialog */}
-        <LegacyDataMigrationDialog
-          open={migrationDialogOpen}
-          onOpenChange={setMigrationDialogOpen}
-          legacyData={legacyData || {}}
-          onMigrationComplete={handleMigrationComplete}
-          onDismiss={markMigrationDismissed}
-        />
-      </div>
+  // Create quick actions based on current state
+  const quickActions = (
+    <div className="space-y-2">
+      {activeTab === 'tournament' && players.length >= 2 && !currentTournament && (
+        <Button 
+          onClick={startTournament}
+          size="sm"
+          className="w-full bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold"
+        >
+          <Trophy className="w-4 h-4 mr-2" />
+          Start Tournament
+        </Button>
+      )}
+      
+      {activeTab === 'mmr' && players.length >= 2 && (
+        <Button size="sm" className="w-full" variant="outline">
+          <Target className="w-4 h-4 mr-2" />
+          Quick Match
+        </Button>
+      )}
     </div>
+  );
+
+  const renderMainContent = () => {
+    if (activeTab === 'tournament') {
+      if (players.length < 2) {
+        return (
+          <Card className="p-8 text-center">
+            <Plus className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-lg font-medium mb-2">Add Players to Begin</h3>
+            <p className="text-muted-foreground">You need at least 2 players to start a tournament</p>
+          </Card>
+        );
+      }
+      
+      if (!currentTournament) {
+        return (
+          <Card className="p-8 bg-gradient-to-r from-table-green/5 to-secondary/5 border-table-green/20">
+            <div className="text-center">
+              <Trophy className="w-16 h-16 text-table-green mx-auto mb-6" />
+              <h3 className="text-2xl font-semibold mb-4">Ready to Start Tournament!</h3>
+              <p className="text-muted-foreground text-lg mb-8">
+                {players.length} players registered. Create a single-elimination bracket!
+              </p>
+              <Button 
+                onClick={startTournament}
+                size="lg"
+                className="bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold px-8 py-3 text-lg"
+              >
+                <Trophy className="w-6 h-6 mr-3" />
+                Start Tournament
+              </Button>
+            </div>
+          </Card>
+        );
+      }
+    }
+    
+    if (activeTab === 'mmr') {
+      return (
+        <MMRMode 
+          players={players}
+          onUpdatePlayers={handleUpdatePlayers}
+          mmrMatches={mmrMatches}
+          onAddMatch={(match) => setMmrMatches([...mmrMatches, match])}
+        />
+      );
+    }
+    
+    return null;
+  };
+
+  return (
+    <AppLayout
+      currentRoom={currentRoom}
+      players={players}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      currentTournament={currentTournament}
+      mmrMatches={mmrMatches}
+      sidebarContent={sidebarContent}
+      quickActions={quickActions}
+    >
+      {renderMainContent()}
+      
+      {/* Legacy Data Migration Dialog */}
+      <LegacyDataMigrationDialog
+        open={migrationDialogOpen}
+        onOpenChange={setMigrationDialogOpen}
+        legacyData={legacyData || {}}
+        onMigrationComplete={handleMigrationComplete}
+        onDismiss={markMigrationDismissed}
+      />
+    </AppLayout>
   );
 };
 
