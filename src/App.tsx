@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { RoomProvider } from "./contexts/RoomContext";
-import Index from "./pages/Index";
+import Home from "./pages/Home";
+import Tournament from "./pages/Tournament";
+import MMR from "./pages/MMR";
 import { JoinRoom } from "./pages/JoinRoom";
 import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -21,7 +23,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/tournament" element={<Tournament />} />
+              <Route path="/mmr" element={<MMR />} />
               <Route path="/join/:inviteId" element={<JoinRoom />} />
               <Route path="/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

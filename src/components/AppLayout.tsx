@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Link } from "react-router-dom";
-import { 
-  Trophy, 
-  Target, 
-  Users, 
-  Settings, 
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Trophy,
+  Target,
+  Users,
+  Settings,
   Menu,
   ChevronLeft,
   ChevronRight,
@@ -18,15 +17,14 @@ import {
 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { RoomSwitcherModal } from "@/components/RoomSwitcherModal";
-import { Player, Tournament, MMRMatch } from "@/types/tournament";
+import { Player, Tournament, MMRMatch, Room } from "@/types/tournament";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRoom } from "@/contexts/RoomContext";
 
 interface AppLayoutProps {
-  currentRoom: any;
+  currentRoom: Room | null;
   players: Player[];
   activeTab: 'tournament' | 'mmr';
-  onTabChange: (tab: 'tournament' | 'mmr') => void;
+  onTabChange?: (tab: 'tournament' | 'mmr') => void;
   currentTournament?: Tournament | null;
   mmrMatches: MMRMatch[];
   children: React.ReactNode;
@@ -46,13 +44,23 @@ export const AppLayout = ({
   quickActions
 }: AppLayoutProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Handle tab changes via navigation
+  const handleTabChange = (tab: 'tournament' | 'mmr') => {
+    if (onTabChange) {
+      onTabChange(tab);
+    } else {
+      navigate(`/${tab}`);
+    }
+  };
 
   const getActivitySummary = () => {
     const recentMatches = mmrMatches.slice(-3);
     const activeTournamentStatus = currentTournament?.status === 'active';
-    
+
     return {
       recentMatches,
       activeTournamentStatus,
@@ -87,7 +95,7 @@ export const AppLayout = ({
                 </SheetContent>
               </Sheet>
 
-              <div className="flex items-center gap-3">
+              <div className="items-center gap-3 hidden sm:flex">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-ping-pong to-victory-gold flex items-center justify-center">
                   <Trophy className="w-4 h-4 text-white" />
                 </div>
@@ -99,7 +107,7 @@ export const AppLayout = ({
 
             {/* Center: Room + Mode Navigation */}
             <div className="flex items-center gap-6">
-              <RoomSwitcherModal 
+              <RoomSwitcherModal
                 trigger={
                   <Button variant="ghost" className="flex items-center gap-2 px-3 py-1.5">
                     <Users className="w-4 h-4 text-ping-pong" />
@@ -114,7 +122,7 @@ export const AppLayout = ({
               />
 
               {currentRoom && (
-                <Tabs value={activeTab} onValueChange={onTabChange}>
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
                   <TabsList className="grid grid-cols-2">
                     <TabsTrigger value="tournament" className="flex items-center gap-2">
                       <Trophy className="w-4 h-4" />
@@ -151,9 +159,8 @@ export const AppLayout = ({
       <div className="flex flex-1">
         {/* Sidebar - Hidden on mobile, collapsible on desktop */}
         {currentRoom && (
-          <aside className={`hidden lg:flex flex-col border-r bg-background/50 transition-all duration-300 ${
-            sidebarCollapsed ? 'w-12' : 'w-80'
-          }`}>
+          <aside className={`hidden lg:flex flex-col border-r bg-background/50 transition-all duration-300 ${sidebarCollapsed ? 'w-12' : 'w-80'
+            }`}>
             {/* Sidebar Header */}
             <div className="p-4 border-b flex items-center justify-between">
               {!sidebarCollapsed && (
@@ -204,13 +211,13 @@ export const AppLayout = ({
                   <Activity className="w-4 h-4" />
                   <span>Activity</span>
                 </div>
-                
+
                 {activity.activeTournamentStatus && (
                   <Badge variant="default" className="bg-table-green">
                     Tournament Active
                   </Badge>
                 )}
-                
+
                 <span className="text-muted-foreground">
                   {activity.totalMatches} matches played
                 </span>
@@ -225,7 +232,7 @@ export const AppLayout = ({
                     </span>
                   </div>
                 )}
-                
+
                 <div className="text-muted-foreground">
                   {activity.totalPlayers} players registered
                 </div>
