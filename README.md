@@ -1,6 +1,6 @@
-# 🏓 Ping Pong Pal - Tournament Bracket Manager
+# 🏓 TTTracker - Table Tennis Tournament Manager
 
-A modern, intuitive ping pong tournament management app that helps you organize tournaments, track matches, and crown champions in your friend group! Features both tournament brackets and continuous MMR/Elo rating system for competitive play.
+A modern, intuitive table tennis tournament management app that helps you organize tournaments, track matches, and crown champions in your friend group! Features both tournament brackets and continuous MMR/Elo rating system for competitive play.
 
 ## ✨ Features
 
@@ -44,7 +44,7 @@ A modern, intuitive ping pong tournament management app that helps you organize 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd ping-pong-pal-bracket
+   cd tttracker
    ```
 
 2. **Install dependencies**

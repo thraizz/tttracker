@@ -1,7 +1,7 @@
 {
-  "name": "Ping Pong Pal - Tournament Bracket Manager",
-  "short_name": "Ping Pong Pal",
-  "description": "Create and manage ping pong tournaments with ease. Track matches, manage players, and crown champions in your friend group!",
+  "name": "TTTracker - Table Tennis Tournament Manager",
+  "short_name": "TTTracker",
+  "description": "Create and manage table tennis tournaments with ease. Track matches, manage players, and crown champions in your friend group!",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

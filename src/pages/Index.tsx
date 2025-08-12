@@ -207,11 +207,11 @@ const Index = () => {
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-ping-pong to-victory-gold bg-clip-text text-transparent">
-              Ping Pong Pal
+              TTTracker
             </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Tournament brackets and MMR tracking for your ping pong group
+            Tournament brackets and MMR tracking for your table tennis group
           </p>
         </div>
 

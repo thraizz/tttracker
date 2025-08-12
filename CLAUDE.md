@@ -32,7 +32,7 @@ npm run preview
 
 ## Architecture Overview
 
-This is a single-page ping pong application built with React, TypeScript, and Vite. The app supports two main modes:
+This is a single-page table tennis application built with React, TypeScript, and Vite. The app supports two main modes:
 1. **Tournament Mode**: Single elimination bracket tournaments
 2. **MMR Mode**: Continuous 1v1 matches with Elo rating system
 

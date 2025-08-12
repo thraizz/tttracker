@@ -1,4 +1,4 @@
-# Ping Pong Pal - Tournament Bracket Manager
+# TTTracker - Table Tennis Tournament Manager
 # Welcome to all search engines and social media crawlers!
 
 User-agent: Googlebot
@@ -17,4 +17,4 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://ping-pong-pal.com/sitemap.xml
+Sitemap: https://tttracker.com/sitemap.xml

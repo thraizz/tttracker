@@ -1,11 +1,11 @@
 {
-  "name": "ping-pong-pal-bracket",
+  "name": "tttracker",
   "private": true,
   "version": "1.0.0",
-  "description": "A modern ping pong tournament bracket management app for tracking matches and champions",
+  "description": "A modern table tennis tournament bracket management app for tracking matches and champions",
   "type": "module",
-  "keywords": ["ping-pong", "tournament", "bracket", "matches", "sports", "competition"],
-  "author": "Ping Pong Pal",
+  "keywords": ["table-tennis", "tournament", "bracket", "matches", "sports", "competition"],
+  "author": "TTTracker",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
