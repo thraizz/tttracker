@@ -1,22 +1,29 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, History, TrendingUp, TrendingDown, Users } from "lucide-react";
+import { Trophy, History, TrendingUp, TrendingDown, Users, Edit, Trash2 } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
 import { MatchRecordModal } from "@/components/MatchRecordModal";
 import { getRankByMmrWithContrast, getRankProgress, getRankColorForTheme } from "@/utils/rankSystem";
 import { MMRDisplay } from "@/components/MMRDisplay";
 import { useTheme } from "@/hooks/useTheme";
+import { EditMatchModal } from "@/components/EditMatchModal";
 
 interface MMRModeContentProps {
   players: Player[];
   onUpdatePlayers: (players: Player[]) => void;
   mmrMatches: MMRMatch[];
   onAddMatch: (match: MMRMatch) => void;
+  onUpdateMatch: (match: MMRMatch) => void;
+  onDeleteMatch: (matchId: string) => void;
 }
 
-export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MMRModeContentProps) => {
+export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatch, onUpdateMatch, onDeleteMatch }: MMRModeContentProps) => {
   const isDark = useTheme();
+  const [editingMatch, setEditingMatch] = useState<MMRMatch | null>(null);
+  
   // Sort players by MMR for leaderboard
   const leaderboard = [...players].sort((a, b) => b.mmr - a.mmr);
 
@@ -173,7 +180,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
               <div className="space-y-4">
                 {recentMatches.map((match) => (
                   <div key={match.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-1">
                       <div className="text-center">
                         <div className="font-semibold">{match.player1.name}</div>
                         <div className="text-sm text-muted-foreground">
@@ -215,10 +222,28 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="flex items-center gap-2">
                       <Badge variant={match.winner.id === match.player1.id ? "default" : "secondary"}>
                         {match.winner.name} wins
                       </Badge>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingMatch(match)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onDeleteMatch(match.id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -227,6 +252,16 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {editingMatch && (
+        <EditMatchModal
+          match={editingMatch}
+          players={players}
+          open={!!editingMatch}
+          onOpenChange={(open) => !open && setEditingMatch(null)}
+          onUpdateMatch={onUpdateMatch}
+        />
+      )}
     </div>
   );
 };

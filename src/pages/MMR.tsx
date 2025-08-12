@@ -48,6 +48,121 @@ const MMR = () => {
     }
   };
 
+  const handleUpdateMatch = async (updatedMatch: MMRMatch) => {
+    if (!currentRoom) return;
+
+    try {
+      // Find the original match and calculate MMR differences
+      const originalMatch = mmrMatches.find(m => m.id === updatedMatch.id);
+      if (!originalMatch) return;
+
+      // Revert the original MMR changes
+      const revertedPlayers = players.map(player => {
+        if (player.id === originalMatch.player1.id) {
+          return {
+            ...player,
+            mmr: player.mmr - originalMatch.mmrChange.player1Change,
+            peakMmr: Math.max(player.peakMmr, player.mmr - originalMatch.mmrChange.player1Change)
+          };
+        }
+        if (player.id === originalMatch.player2.id) {
+          return {
+            ...player,
+            mmr: player.mmr - originalMatch.mmrChange.player2Change,
+            peakMmr: Math.max(player.peakMmr, player.mmr - originalMatch.mmrChange.player2Change)
+          };
+        }
+        return player;
+      });
+
+      // Apply the new MMR changes
+      const updatedPlayers = revertedPlayers.map(player => {
+        if (player.id === updatedMatch.player1.id) {
+          const newMmr = player.mmr + updatedMatch.mmrChange.player1Change;
+          return {
+            ...player,
+            mmr: newMmr,
+            peakMmr: Math.max(player.peakMmr, newMmr),
+            wins: updatedMatch.winner.id === player.id ? player.wins : player.wins,
+            losses: updatedMatch.winner.id !== player.id ? player.losses : player.losses
+          };
+        }
+        if (player.id === updatedMatch.player2.id) {
+          const newMmr = player.mmr + updatedMatch.mmrChange.player2Change;
+          return {
+            ...player,
+            mmr: newMmr,
+            peakMmr: Math.max(player.peakMmr, newMmr),
+            wins: updatedMatch.winner.id === player.id ? player.wins : player.wins,
+            losses: updatedMatch.winner.id !== player.id ? player.losses : player.losses
+          };
+        }
+        return player;
+      });
+
+      // Update matches array
+      const updatedMatches = mmrMatches.map(match => 
+        match.id === updatedMatch.id ? updatedMatch : match
+      );
+
+      // Update room
+      await updateRoom(currentRoom.id, { 
+        players: updatedPlayers,
+        mmrMatches: updatedMatches
+      });
+      
+      setPlayers(updatedPlayers);
+      setMmrMatches(updatedMatches);
+    } catch (error) {
+      console.error('Failed to update match:', error);
+    }
+  };
+
+  const handleDeleteMatch = async (matchId: string) => {
+    if (!currentRoom) return;
+
+    try {
+      // Find the match to delete
+      const matchToDelete = mmrMatches.find(m => m.id === matchId);
+      if (!matchToDelete) return;
+
+      // Revert the MMR changes
+      const revertedPlayers = players.map(player => {
+        if (player.id === matchToDelete.player1.id) {
+          return {
+            ...player,
+            mmr: player.mmr - matchToDelete.mmrChange.player1Change,
+            wins: matchToDelete.winner.id === player.id ? player.wins - 1 : player.wins,
+            losses: matchToDelete.winner.id !== player.id ? player.losses - 1 : player.losses
+          };
+        }
+        if (player.id === matchToDelete.player2.id) {
+          return {
+            ...player,
+            mmr: player.mmr - matchToDelete.mmrChange.player2Change,
+            wins: matchToDelete.winner.id === player.id ? player.wins - 1 : player.wins,
+            losses: matchToDelete.winner.id !== player.id ? player.losses - 1 : player.losses
+          };
+        }
+        return player;
+      });
+
+      // Remove the match from the array
+      const updatedMatches = mmrMatches.filter(match => match.id !== matchId);
+
+      // Update room
+      await updateRoom(currentRoom.id, { 
+        players: revertedPlayers,
+        mmrMatches: updatedMatches
+      });
+      
+      setPlayers(revertedPlayers);
+      setMmrMatches(updatedMatches);
+    } catch (error) {
+      console.error('Failed to delete match:', error);
+    }
+  };
+
   // Create sidebar content
   const sidebarContent = (
     <PlayerSidebar
@@ -83,6 +198,8 @@ const MMR = () => {
         onUpdatePlayers={handleUpdatePlayers}
         mmrMatches={mmrMatches}
         onAddMatch={(match) => setMmrMatches([...mmrMatches, match])}
+        onUpdateMatch={handleUpdateMatch}
+        onDeleteMatch={handleDeleteMatch}
       />
     </AppLayout>
   );

@@ -1,13 +1,21 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { History, TrendingUp, TrendingDown } from "lucide-react";
-import { MMRMatch } from "@/types/tournament";
+import { Button } from "@/components/ui/button";
+import { History, TrendingUp, TrendingDown, Edit, Trash2 } from "lucide-react";
+import { MMRMatch, Player } from "@/types/tournament";
+import { EditMatchModal } from "@/components/EditMatchModal";
 
 interface MatchHistoryProps {
   mmrMatches: MMRMatch[];
+  players: Player[];
+  onUpdateMatch: (match: MMRMatch) => void;
+  onDeleteMatch: (matchId: string) => void;
 }
 
-export const MatchHistory = ({ mmrMatches }: MatchHistoryProps) => {
+export const MatchHistory = ({ mmrMatches, players, onUpdateMatch, onDeleteMatch }: MatchHistoryProps) => {
+  const [editingMatch, setEditingMatch] = useState<MMRMatch | null>(null);
+  
   // Recent matches (last 10)
   const recentMatches = [...mmrMatches].reverse().slice(0, 10);
 
@@ -28,7 +36,7 @@ export const MatchHistory = ({ mmrMatches }: MatchHistoryProps) => {
         <div className="space-y-4">
           {recentMatches.map((match) => (
             <div key={match.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-1">
                 <div className="text-center">
                   <div className="font-semibold">{match.player1.name}</div>
                   <div className="text-sm text-muted-foreground">
@@ -70,14 +78,42 @@ export const MatchHistory = ({ mmrMatches }: MatchHistoryProps) => {
                   </div>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="flex items-center gap-2">
                 <Badge variant={match.winner.id === match.player1.id ? "default" : "secondary"}>
                   {match.winner.name} wins
                 </Badge>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditingMatch(match)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onDeleteMatch(match.id)}
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+      
+      {editingMatch && (
+        <EditMatchModal
+          match={editingMatch}
+          players={players}
+          open={!!editingMatch}
+          onOpenChange={(open) => !open && setEditingMatch(null)}
+          onUpdateMatch={onUpdateMatch}
+        />
       )}
     </Card>
   );

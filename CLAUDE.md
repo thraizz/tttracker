@@ -4,11 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-**Start development server:**
-```bash
-npm run dev
-```
-Server runs on port 8080 with host "::" (accessible from all interfaces).
+**IMPORTANT: Never start the development server (`npm run dev`). Testing should be done through build commands only.**
 
 **Build for production:**
 ```bash
@@ -25,10 +21,7 @@ npm run build:dev
 npm run lint
 ```
 
-**Preview production build:**
-```bash
-npm run preview
-```
+**NEVER use `npm run preview` or any server commands.**
 
 ## Architecture Overview
 
