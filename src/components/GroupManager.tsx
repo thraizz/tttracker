@@ -8,48 +8,48 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useRoom } from '@/contexts/RoomContext';
+import { useGroup } from '@/contexts/GroupContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { createRoomInvite } from '@/services/roomService';
+import { createGroupInvite } from '@/services/groupService';
 import { Plus, Users, Share, Copy } from 'lucide-react';
 
-export const RoomManager: React.FC = () => {
+export const GroupManager: React.FC = () => {
   const { user } = useAuth();
-  const { currentRoom, userRooms, createNewRoom, setCurrentRoom } = useRoom();
+  const { currentGroup, userGroups, createNewGroup, setCurrentGroup } = useGroup();
   const { toast } = useToast();
   
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [newRoomName, setNewRoomName] = useState('');
-  const [newRoomDescription, setNewRoomDescription] = useState('');
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
   const [shareLink, setShareLink] = useState('');
   const [creating, setCreating] = useState(false);
 
-  const handleCreateRoom = async () => {
-    if (!newRoomName.trim()) {
-      toast({ title: 'Error', description: 'Room name is required', variant: 'destructive' });
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) {
+      toast({ title: 'Error', description: 'Group name is required', variant: 'destructive' });
       return;
     }
 
     setCreating(true);
     try {
-      await createNewRoom(newRoomName.trim(), newRoomDescription.trim());
+      await createNewGroup(newGroupName.trim(), newGroupDescription.trim());
       setCreateDialogOpen(false);
-      setNewRoomName('');
-      setNewRoomDescription('');
-      toast({ title: 'Success', description: 'Room created successfully!' });
+      setNewGroupName('');
+      setNewGroupDescription('');
+      toast({ title: 'Success', description: 'Group created successfully!' });
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to create room', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to create group', variant: 'destructive' });
     } finally {
       setCreating(false);
     }
   };
 
-  const handleShareRoom = async () => {
-    if (!currentRoom || !user) return;
+  const handleShareGroup = async () => {
+    if (!currentGroup || !user) return;
     
     try {
-      const inviteId = await createRoomInvite(currentRoom.id, currentRoom.name, user.uid);
+      const inviteId = await createGroupInvite(currentGroup.id, currentGroup.name, user.uid);
       const link = `${window.location.origin}/join/${inviteId}`;
       setShareLink(link);
       setShareDialogOpen(true);
@@ -69,26 +69,26 @@ export const RoomManager: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Current Room Display */}
-      {currentRoom && (
+      {/* Current Group Display */}
+      {currentGroup && (
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">{currentRoom.name}</CardTitle>
-                {currentRoom.description && (
-                  <CardDescription>{currentRoom.description}</CardDescription>
+                <CardTitle className="text-lg">{currentGroup.name}</CardTitle>
+                {currentGroup.description && (
+                  <CardDescription>{currentGroup.description}</CardDescription>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="gap-1">
                   <Users className="h-3 w-3" />
-                  {currentRoom.members.length}
+                  {currentGroup.members.length}
                 </Badge>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleShareRoom}
+                  onClick={handleShareGroup}
                   className="gap-1"
                 >
                   <Share className="h-3 w-3" />
@@ -100,27 +100,27 @@ export const RoomManager: React.FC = () => {
         </Card>
       )}
 
-      {/* Room Selection and Creation */}
+      {/* Group Selection and Creation */}
       <div className="flex gap-2">
         <div className="flex-1">
           <Select
-            value={currentRoom?.id || ''}
-            onValueChange={(roomId) => {
-              const room = userRooms.find(r => r.id === roomId);
-              setCurrentRoom(room || null);
+            value={currentGroup?.id || ''}
+            onValueChange={(groupId) => {
+              const group = userGroups.find(g => g.id === groupId);
+              setCurrentGroup(group || null);
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a room" />
+              <SelectValue placeholder="Select a group" />
             </SelectTrigger>
             <SelectContent>
-              {userRooms.map((room) => (
-                <SelectItem key={room.id} value={room.id}>
+              {userGroups.map((group) => (
+                <SelectItem key={group.id} value={group.id}>
                   <div className="flex items-center justify-between w-full">
-                    <span>{room.name}</span>
+                    <span>{group.name}</span>
                     <Badge variant="outline" className="ml-2 gap-1">
                       <Users className="h-3 w-3" />
-                      {room.members.length}
+                      {group.members.length}
                     </Badge>
                   </div>
                 </SelectItem>
@@ -133,30 +133,30 @@ export const RoomManager: React.FC = () => {
           <DialogTrigger asChild>
             <Button variant="outline" className="gap-1">
               <Plus className="h-4 w-4" />
-              Create Room
+              Create Group
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Room</DialogTitle>
+              <DialogTitle>Create New Group</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="room-name">Room Name</Label>
+                <Label htmlFor="group-name">Group Name</Label>
                 <Input
-                  id="room-name"
-                  value={newRoomName}
-                  onChange={(e) => setNewRoomName(e.target.value)}
-                  placeholder="Enter room name"
+                  id="group-name"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Enter group name"
                 />
               </div>
               <div>
-                <Label htmlFor="room-description">Description (Optional)</Label>
+                <Label htmlFor="group-description">Description (Optional)</Label>
                 <Textarea
-                  id="room-description"
-                  value={newRoomDescription}
-                  onChange={(e) => setNewRoomDescription(e.target.value)}
-                  placeholder="Describe your room"
+                  id="group-description"
+                  value={newGroupDescription}
+                  onChange={(e) => setNewGroupDescription(e.target.value)}
+                  placeholder="Describe your group"
                   rows={3}
                 />
               </div>
@@ -168,8 +168,8 @@ export const RoomManager: React.FC = () => {
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleCreateRoom} disabled={creating}>
-                  {creating ? 'Creating...' : 'Create Room'}
+                <Button onClick={handleCreateGroup} disabled={creating}>
+                  {creating ? 'Creating...' : 'Create Group'}
                 </Button>
               </div>
             </div>
@@ -181,11 +181,11 @@ export const RoomManager: React.FC = () => {
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Share Room</DialogTitle>
+            <DialogTitle>Share Group</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Share this link with others to invite them to your room:
+              Share this link with others to invite them to your group:
             </p>
             <div className="flex gap-2">
               <Input value={shareLink} readOnly className="flex-1" />
@@ -194,7 +194,7 @@ export const RoomManager: React.FC = () => {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              This link will allow others to join your room. Keep it private!
+              This link will allow others to join your group. Keep it private!
             </p>
           </div>
         </DialogContent>

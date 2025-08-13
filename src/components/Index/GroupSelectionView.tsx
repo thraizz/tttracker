@@ -2,15 +2,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Trophy, Settings } from "lucide-react";
-import { RoomManager } from "@/components/RoomManager";
+import { GroupManager } from "@/components/GroupManager";
 import { UserAvatar } from "@/components/UserAvatar";
 import { User } from "firebase/auth";
 
-interface RoomSelectionViewProps {
+interface GroupSelectionViewProps {
   user: User | null;
 }
 
-export const RoomSelectionView = ({ user }: RoomSelectionViewProps) => {
+export const GroupSelectionView = ({ user }: GroupSelectionViewProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-soft-gray to-background">
       <div className="container max-w-4xl mx-auto py-8 px-4">
@@ -45,8 +45,8 @@ export const RoomSelectionView = ({ user }: RoomSelectionViewProps) => {
         </div>
         
         <Card className="p-6">
-          <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Room</h2>
-          <RoomManager />
+          <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Group</h2>
+          <GroupManager />
         </Card>
       </div>
     </div>

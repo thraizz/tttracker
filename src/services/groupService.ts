@@ -15,7 +15,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Room, RoomInvite } from '../types/tournament';
+import { Group, GroupInvite } from '../types/tournament';
 
 // Types for Firebase data conversion
 interface FirebaseData {
@@ -37,15 +37,15 @@ interface FirebaseTournament {
   [key: string]: unknown;
 }
 
-const ROOMS_COLLECTION = 'rooms';
-const ROOM_INVITES_COLLECTION = 'roomInvites';
+const GROUPS_COLLECTION = 'groups';
+const GROUP_INVITES_COLLECTION = 'groupInvites';
 
-export const createRoom = async (
-  roomData: Omit<Room, 'id' | 'createdAt'>,
+export const createGroup = async (
+  groupData: Omit<Group, 'id' | 'createdAt'>,
   userId: string
 ): Promise<string> => {
-  const docRef = await addDoc(collection(db, ROOMS_COLLECTION), {
-    ...roomData,
+  const docRef = await addDoc(collection(db, GROUPS_COLLECTION), {
+    ...groupData,
     createdBy: userId,
     createdAt: serverTimestamp(),
     members: [userId]
@@ -54,8 +54,8 @@ export const createRoom = async (
   return docRef.id;
 };
 
-export const getRoom = async (roomId: string): Promise<Room | null> => {
-  const docRef = doc(db, ROOMS_COLLECTION, roomId);
+export const getGroup = async (groupId: string): Promise<Group | null> => {
+  const docRef = doc(db, GROUPS_COLLECTION, groupId);
   const docSnap = await getDoc(docRef);
   
   if (docSnap.exists()) {
@@ -83,15 +83,15 @@ export const getRoom = async (roomId: string): Promise<Room | null> => {
     return {
       id: docSnap.id,
       ...processedData
-    } as Room;
+    } as Group;
   }
   
   return null;
 };
 
-export const getUserRooms = async (userId: string): Promise<Room[]> => {
+export const getUserGroups = async (userId: string): Promise<Group[]> => {
   const q = query(
-    collection(db, ROOMS_COLLECTION),
+    collection(db, GROUPS_COLLECTION),
     where('members', 'array-contains', userId)
   );
   
@@ -121,36 +121,36 @@ export const getUserRooms = async (userId: string): Promise<Room[]> => {
     return {
       id: doc.id,
       ...processedData
-    } as Room;
+    } as Group;
   });
 };
 
-export const joinRoom = async (roomId: string, userId: string): Promise<void> => {
-  const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-  await updateDoc(roomRef, {
+export const joinGroup = async (groupId: string, userId: string): Promise<void> => {
+  const groupRef = doc(db, GROUPS_COLLECTION, groupId);
+  await updateDoc(groupRef, {
     members: arrayUnion(userId)
   });
 };
 
-export const leaveRoom = async (roomId: string, userId: string): Promise<void> => {
-  const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-  await updateDoc(roomRef, {
+export const leaveGroup = async (groupId: string, userId: string): Promise<void> => {
+  const groupRef = doc(db, GROUPS_COLLECTION, groupId);
+  await updateDoc(groupRef, {
     members: arrayRemove(userId)
   });
 };
 
-export const updateRoom = async (roomId: string, updates: Partial<Room>): Promise<void> => {
-  const roomRef = doc(db, ROOMS_COLLECTION, roomId);
-  await updateDoc(roomRef, updates);
+export const updateGroup = async (groupId: string, updates: Partial<Group>): Promise<void> => {
+  const groupRef = doc(db, GROUPS_COLLECTION, groupId);
+  await updateDoc(groupRef, updates);
 };
 
-export const deleteRoom = async (roomId: string): Promise<void> => {
-  await deleteDoc(doc(db, ROOMS_COLLECTION, roomId));
+export const deleteGroup = async (groupId: string): Promise<void> => {
+  await deleteDoc(doc(db, GROUPS_COLLECTION, groupId));
 };
 
-export const createRoomInvite = async (
-  roomId: string, 
-  roomName: string,
+export const createGroupInvite = async (
+  groupId: string, 
+  groupName: string,
   userId: string,
   options?: {
     expiresAt?: Date;
@@ -158,8 +158,8 @@ export const createRoomInvite = async (
   }
 ): Promise<string> => {
   const inviteData = {
-    roomId,
-    roomName,
+    groupId,
+    groupName,
     createdBy: userId,
     createdAt: serverTimestamp(),
     usedCount: 0,
@@ -167,12 +167,12 @@ export const createRoomInvite = async (
     ...(options?.usageLimit && { usageLimit: options.usageLimit })
   };
   
-  const docRef = await addDoc(collection(db, ROOM_INVITES_COLLECTION), inviteData);
+  const docRef = await addDoc(collection(db, GROUP_INVITES_COLLECTION), inviteData);
   return docRef.id;
 };
 
-export const getRoomInvite = async (inviteId: string): Promise<RoomInvite | null> => {
-  const docRef = doc(db, ROOM_INVITES_COLLECTION, inviteId);
+export const getGroupInvite = async (inviteId: string): Promise<GroupInvite | null> => {
+  const docRef = doc(db, GROUP_INVITES_COLLECTION, inviteId);
   const docSnap = await getDoc(docRef);
   
   if (docSnap.exists()) {
@@ -182,14 +182,14 @@ export const getRoomInvite = async (inviteId: string): Promise<RoomInvite | null
       ...data,
       createdAt: data.createdAt?.toDate() || new Date(),
       ...(data.expiresAt && { expiresAt: data.expiresAt.toDate() })
-    } as RoomInvite;
+    } as GroupInvite;
   }
   
   return null;
 };
 
-export const consumeRoomInvite = async (inviteId: string): Promise<void> => {
-  const inviteRef = doc(db, ROOM_INVITES_COLLECTION, inviteId);
+export const consumeGroupInvite = async (inviteId: string): Promise<void> => {
+  const inviteRef = doc(db, GROUP_INVITES_COLLECTION, inviteId);
   const inviteSnap = await getDoc(inviteRef);
   
   if (!inviteSnap.exists()) {
@@ -211,13 +211,13 @@ export const consumeRoomInvite = async (inviteId: string): Promise<void> => {
   });
 };
 
-export const subscribeToRoom = (
-  roomId: string, 
-  callback: (room: Room | null) => void
+export const subscribeToGroup = (
+  groupId: string, 
+  callback: (group: Group | null) => void
 ): (() => void) => {
-  const roomRef = doc(db, ROOMS_COLLECTION, roomId);
+  const groupRef = doc(db, GROUPS_COLLECTION, groupId);
   
-  return onSnapshot(roomRef, (doc) => {
+  return onSnapshot(groupRef, (doc) => {
     if (doc.exists()) {
       const data = doc.data() as FirebaseData;
       
@@ -243,7 +243,7 @@ export const subscribeToRoom = (
       callback({
         id: doc.id,
         ...processedData
-      } as Room);
+      } as Group);
     } else {
       callback(null);
     }

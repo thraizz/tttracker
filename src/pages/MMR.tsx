@@ -5,33 +5,33 @@ import { AppLayout } from "@/components/AppLayout";
 import { PlayerSidebar } from "@/components/PlayerSidebar";
 import { MMRModeContent } from "@/components/MMRModeContent";
 import { Player, MMRMatch } from "@/types/tournament";
-import { useRoom } from "@/contexts/RoomContext";
-import { updateRoom } from "@/services/roomService";
+import { useGroup } from "@/contexts/GroupContext";
+import { updateGroup } from "@/services/groupService";
 
 const MMR = () => {
-  const { currentRoom } = useRoom();
+  const { currentGroup } = useGroup();
   const [players, setPlayers] = useState<Player[]>([]);
   const [mmrMatches, setMmrMatches] = useState<MMRMatch[]>([]);
 
-  // Load data from current room
+  // Load data from current group
   useEffect(() => {
-    if (currentRoom) {
-      const playersWithMmr = currentRoom.players.map((player: Player) => ({
+    if (currentGroup) {
+      const playersWithMmr = currentGroup.players.map((player: Player) => ({
         ...player,
         mmr: player.mmr || 1000,
         peakMmr: player.peakMmr || player.mmr || 1000
       }));
       setPlayers(playersWithMmr);
-      setMmrMatches(currentRoom.mmrMatches || []);
+      setMmrMatches(currentGroup.mmrMatches || []);
     } else {
-      // Reset state when no room is selected
+      // Reset state when no group is selected
       setPlayers([]);
       setMmrMatches([]);
     }
-  }, [currentRoom]);
+  }, [currentGroup]);
 
   const handleUpdatePlayers = async (updatedPlayers: Player[]) => {
-    if (!currentRoom) return;
+    if (!currentGroup) return;
 
     // Ensure all players have MMR fields when updated
     const playersWithMmr = updatedPlayers.map(player => ({
@@ -41,15 +41,15 @@ const MMR = () => {
     }));
 
     try {
-      await updateRoom(currentRoom.id, { players: playersWithMmr });
+      await updateGroup(currentGroup.id, { players: playersWithMmr });
       setPlayers(playersWithMmr);
     } catch (error) {
-      console.error('Failed to update players in room:', error);
+      console.error('Failed to update players in group:', error);
     }
   };
 
   const handleUpdateMatch = async (updatedMatch: MMRMatch) => {
-    if (!currentRoom) return;
+    if (!currentGroup) return;
 
     try {
       // Find the original match and calculate MMR differences
@@ -105,8 +105,8 @@ const MMR = () => {
         match.id === updatedMatch.id ? updatedMatch : match
       );
 
-      // Update room
-      await updateRoom(currentRoom.id, { 
+      // Update group
+      await updateGroup(currentGroup.id, { 
         players: updatedPlayers,
         mmrMatches: updatedMatches
       });
@@ -119,7 +119,7 @@ const MMR = () => {
   };
 
   const handleDeleteMatch = async (matchId: string) => {
-    if (!currentRoom) return;
+    if (!currentGroup) return;
 
     try {
       // Find the match to delete
@@ -150,8 +150,8 @@ const MMR = () => {
       // Remove the match from the array
       const updatedMatches = mmrMatches.filter(match => match.id !== matchId);
 
-      // Update room
-      await updateRoom(currentRoom.id, { 
+      // Update group
+      await updateGroup(currentGroup.id, { 
         players: revertedPlayers,
         mmrMatches: updatedMatches
       });
@@ -186,7 +186,7 @@ const MMR = () => {
 
   return (
     <AppLayout
-      currentRoom={currentRoom}
+      currentGroup={currentGroup}
       players={players}
       currentTournament={null}
       mmrMatches={mmrMatches}

@@ -3,41 +3,41 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { Trophy, Settings } from "lucide-react";
-import { RoomManager } from "@/components/RoomManager";
+import { GroupManager } from "@/components/GroupManager";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRoom } from "@/contexts/RoomContext";
+import { useGroup } from "@/contexts/GroupContext";
 import { useLegacyDataMigration } from "@/hooks/useLegacyDataMigration";
 import { LegacyDataMigrationDialog } from "@/components/LegacyDataMigrationDialog";
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { currentRoom, loading: roomLoading, refreshRooms } = useRoom();
+  const { currentGroup, loading: groupLoading, refreshGroups } = useGroup();
   const { hasLegacyData, legacyData, migrationChecked, clearLegacyData, markMigrationDismissed } = useLegacyDataMigration();
   const [migrationDialogOpen, setMigrationDialogOpen] = useState(false);
 
-  // Redirect to tournament page if room is selected
+  // Redirect to tournament page if group is selected
   useEffect(() => {
-    if (currentRoom && !roomLoading) {
+    if (currentGroup && !groupLoading) {
       navigate('/tournament');
     }
-  }, [currentRoom, roomLoading, navigate]);
+  }, [currentGroup, groupLoading, navigate]);
 
-  // Show migration dialog when legacy data is detected and no current room
+  // Show migration dialog when legacy data is detected and no current group
   useEffect(() => {
-    if (migrationChecked && hasLegacyData && !currentRoom && !roomLoading && !authLoading) {
+    if (migrationChecked && hasLegacyData && !currentGroup && !groupLoading && !authLoading) {
       setMigrationDialogOpen(true);
     }
-  }, [migrationChecked, hasLegacyData, currentRoom, roomLoading, authLoading]);
+  }, [migrationChecked, hasLegacyData, currentGroup, groupLoading, authLoading]);
 
   const handleMigrationComplete = async () => {
     clearLegacyData();
-    await refreshRooms();
+    await refreshGroups();
   };
 
-  // Show loading while authenticating or loading room
-  if (authLoading || roomLoading) {
+  // Show loading while authenticating or loading group
+  if (authLoading || groupLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -82,8 +82,8 @@ const Home = () => {
         </div>
 
         <Card className="p-6">
-          <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Room</h2>
-          <RoomManager />
+          <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Group</h2>
+          <GroupManager />
         </Card>
 
         {/* Legacy Data Migration Dialog */}

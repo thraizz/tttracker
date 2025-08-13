@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Target } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
-import { useRoom } from "@/contexts/RoomContext";
-import { updateRoom } from "@/services/roomService";
+import { useGroup } from "@/contexts/GroupContext";
+import { updateGroup } from "@/services/groupService";
 import { getRankByMmr } from "@/utils/rankSystem";
 import { calculateEloChange } from "@/utils/eloUtils";
 
@@ -19,7 +19,7 @@ interface MatchRecordFormProps {
 }
 
 export const MatchRecordForm = ({ players, onUpdatePlayers, mmrMatches, onAddMatch }: MatchRecordFormProps) => {
-  const { currentRoom } = useRoom();
+  const { currentGroup } = useGroup();
   const { toast } = useToast();
   const [selectedPlayer1, setSelectedPlayer1] = useState<string>("");
   const [selectedPlayer2, setSelectedPlayer2] = useState<string>("");
@@ -31,8 +31,8 @@ export const MatchRecordForm = ({ players, onUpdatePlayers, mmrMatches, onAddMat
   const recordMatch = async () => {
     if (!selectedPlayer1 || !selectedPlayer2 || !scorePlayer1 || !scorePlayer2) return;
     if (selectedPlayer1 === selectedPlayer2) return;
-    if (!currentRoom) {
-      toast({ title: 'Error', description: 'No room selected', variant: 'destructive' });
+    if (!currentGroup) {
+      toast({ title: 'Error', description: 'No group selected', variant: 'destructive' });
       return;
     }
     
@@ -76,7 +76,7 @@ export const MatchRecordForm = ({ players, onUpdatePlayers, mmrMatches, onAddMat
           player2NewMmr: newMmr2
         },
         completedAt: new Date(),
-        roomId: currentRoom.id
+        groupId: currentGroup.id
       };
 
       // Update players
@@ -104,8 +104,8 @@ export const MatchRecordForm = ({ players, onUpdatePlayers, mmrMatches, onAddMat
 
       const updatedMatches = [...mmrMatches, match];
 
-      // Update room in Firebase
-      await updateRoom(currentRoom.id, {
+      // Update group in Firebase
+      await updateGroup(currentGroup.id, {
         players: updatedPlayers,
         mmrMatches: updatedMatches
       });

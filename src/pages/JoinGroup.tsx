@@ -4,20 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRoom } from '@/contexts/RoomContext';
-import { getRoomInvite, consumeRoomInvite, getRoom } from '@/services/roomService';
-import { RoomInvite, Room } from '@/types/tournament';
+import { useGroup } from '@/contexts/GroupContext';
+import { getGroupInvite, consumeGroupInvite, getGroup } from '@/services/groupService';
+import { GroupInvite, Group } from '@/types/tournament';
 import { Users, Calendar, Clock } from 'lucide-react';
 
-export const JoinRoom: React.FC = () => {
+export const JoinGroup: React.FC = () => {
   const { inviteId } = useParams<{ inviteId: string }>();
   const { user, loading: authLoading } = useAuth();
-  const { joinRoomById, setCurrentRoom } = useRoom();
+  const { joinGroupById, setCurrentGroup } = useGroup();
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const [invite, setInvite] = useState<RoomInvite | null>(null);
-  const [room, setRoom] = useState<Room | null>(null);
+  const [invite, setInvite] = useState<GroupInvite | null>(null);
+  const [group, setGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export const JoinRoom: React.FC = () => {
       }
 
       try {
-        const inviteData = await getRoomInvite(inviteId);
+        const inviteData = await getGroupInvite(inviteId);
         if (!inviteData) {
           setError('Invite not found or has expired');
           setLoading(false);
@@ -54,15 +54,15 @@ export const JoinRoom: React.FC = () => {
 
         setInvite(inviteData);
 
-        // Load room data
-        const roomData = await getRoom(inviteData.roomId);
-        if (!roomData) {
-          setError('Room not found');
+        // Load group data
+        const groupData = await getGroup(inviteData.groupId);
+        if (!groupData) {
+          setError('Group not found');
           setLoading(false);
           return;
         }
 
-        setRoom(roomData);
+        setGroup(groupData);
       } catch (error) {
         console.error('Error loading invite:', error);
         setError('Failed to load invite');
@@ -74,35 +74,35 @@ export const JoinRoom: React.FC = () => {
     loadInviteData();
   }, [inviteId]);
 
-  const handleJoinRoom = async () => {
-    if (!invite || !room || !user) return;
+  const handleJoinGroup = async () => {
+    if (!invite || !group || !user) return;
 
     setJoining(true);
     try {
       // Check if user is already a member
-      if (room.members.includes(user.uid)) {
-        setCurrentRoom(room);
-        toast({ title: 'Success', description: 'You are already a member of this room!' });
+      if (group.members.includes(user.uid)) {
+        setCurrentGroup(group);
+        toast({ title: 'Success', description: 'You are already a member of this group!' });
         navigate('/');
         return;
       }
 
       // Use the invite (increment usage count)
-      await consumeRoomInvite(invite.id);
+      await consumeGroupInvite(invite.id);
       
-      // Join the room
-      await joinRoomById(room.id);
+      // Join the group
+      await joinGroupById(group.id);
       
-      // Set as current room
-      setCurrentRoom(room);
+      // Set as current group
+      setCurrentGroup(group);
       
-      toast({ title: 'Success', description: `Successfully joined ${room.name}!` });
+      toast({ title: 'Success', description: `Successfully joined ${group.name}!` });
       navigate('/');
     } catch (error: unknown) {
-      console.error('Error joining room:', error);
+      console.error('Error joining group:', error);
       toast({ 
         title: 'Error', 
-        description: error instanceof Error ? error.message : 'Failed to join room',
+        description: error instanceof Error ? error.message : 'Failed to join group',
         variant: 'destructive'
       });
     } finally {
@@ -139,7 +139,7 @@ export const JoinRoom: React.FC = () => {
     );
   }
 
-  if (!room || !invite) {
+  if (!group || !invite) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="w-full max-w-md">
@@ -161,26 +161,26 @@ export const JoinRoom: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Join Room</CardTitle>
-          <CardDescription>You've been invited to join a table tennis room</CardDescription>
+          <CardTitle className="text-xl">Join Group</CardTitle>
+          <CardDescription>You've been invited to join a table tennis group</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold">{room.name}</h3>
-            {room.description && (
-              <p className="text-muted-foreground text-sm">{room.description}</p>
+            <h3 className="text-lg font-semibold">{group.name}</h3>
+            {group.description && (
+              <p className="text-muted-foreground text-sm">{group.description}</p>
             )}
           </div>
 
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span>{room.members.length} members</span>
+              <span>{group.members.length} members</span>
             </div>
             
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>Created {room.createdAt.toLocaleDateString()}</span>
+              <span>Created {group.createdAt.toLocaleDateString()}</span>
             </div>
 
             {invite.expiresAt && (
@@ -199,11 +199,11 @@ export const JoinRoom: React.FC = () => {
 
           <div className="space-y-2">
             <Button
-              onClick={handleJoinRoom}
+              onClick={handleJoinGroup}
               disabled={joining}
               className="w-full"
             >
-              {joining ? 'Joining...' : 'Join Room'}
+              {joining ? 'Joining...' : 'Join Group'}
             </Button>
             
             <Button

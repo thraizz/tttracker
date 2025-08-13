@@ -54,10 +54,10 @@ export interface MMRMatch {
     player2NewMmr: number;
   };
   completedAt: Date;
-  roomId?: string;
+  groupId?: string;
 }
 
-export interface Room {
+export interface Group {
   id: string;
   name: string;
   description?: string;
@@ -75,10 +75,10 @@ export interface Room {
   };
 }
 
-export interface RoomInvite {
+export interface GroupInvite {
   id: string;
-  roomId: string;
-  roomName: string;
+  groupId: string;
+  groupName: string;
   createdBy: string;
   createdAt: Date;
   expiresAt?: Date;

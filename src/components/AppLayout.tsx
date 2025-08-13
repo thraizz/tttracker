@@ -16,12 +16,12 @@ import {
   Clock
 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
-import { RoomSwitcherModal } from "@/components/RoomSwitcherModal";
-import { Player, Tournament, MMRMatch, Room } from "@/types/tournament";
+import { GroupSwitcherModal } from "@/components/GroupSwitcherModal";
+import { Player, Tournament, MMRMatch, Group } from "@/types/tournament";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface AppLayoutProps {
-  currentRoom: Room | null;
+  currentGroup: Group | null;
   players: Player[];
   currentTournament?: Tournament | null;
   mmrMatches: MMRMatch[];
@@ -31,7 +31,7 @@ interface AppLayoutProps {
 }
 
 export const AppLayout = ({
-  currentRoom,
+  currentGroup,
   players,
   currentTournament,
   mmrMatches,
@@ -104,14 +104,14 @@ export const AppLayout = ({
               </div>
             </div>
 
-            {/* Center: Room + Mode Navigation */}
+            {/* Center: Group + Mode Navigation */}
             <div className="flex items-center gap-6">
-              <RoomSwitcherModal
+              <GroupSwitcherModal
                 trigger={
                   <Button variant="ghost" className="flex items-center gap-2 px-3 py-1.5">
                     <Users className="w-4 h-4 text-ping-pong" />
-                    <span className="text-sm font-medium">{currentRoom?.name || 'Select Room'}</span>
-                    {currentRoom && (
+                    <span className="text-sm font-medium">{currentGroup?.name || 'Select Group'}</span>
+                    {currentGroup && (
                       <Badge variant="secondary" className="text-xs">
                         {players.length}
                       </Badge>
@@ -120,7 +120,7 @@ export const AppLayout = ({
                 }
               />
 
-              {currentRoom && (
+              {currentGroup && (
                 <Tabs value={getCurrentTab()} onValueChange={handleTabChange}>
                   <TabsList className="grid grid-cols-2">
                     <TabsTrigger value="tournament" className="flex items-center gap-2">
@@ -157,7 +157,7 @@ export const AppLayout = ({
       {/* Main Content Area */}
       <div className="flex flex-1">
         {/* Sidebar - Hidden on mobile, collapsible on desktop */}
-        {currentRoom && (
+        {currentGroup && (
           <aside className={`hidden lg:flex flex-col border-r bg-background/50 transition-all duration-300 ${sidebarCollapsed ? 'w-12' : 'w-80'
             }`}>
             {/* Sidebar Header */}
@@ -201,7 +201,7 @@ export const AppLayout = ({
       </div>
 
       {/* Status Bar */}
-      {currentRoom && (
+      {currentGroup && (
         <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container max-w-7xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between text-sm">

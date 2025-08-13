@@ -6,9 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useRoom } from '@/contexts/RoomContext';
+import { useGroup } from '@/contexts/GroupContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { updateRoom } from '@/services/roomService';
+import { updateGroup } from '@/services/groupService';
 import { Player, Tournament, MMRMatch } from '@/types/tournament';
 import { Download, Upload, FileText, AlertTriangle, ArrowLeft, User, LogIn, LogOut, Chrome } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -23,12 +23,12 @@ interface LegacyData {
 
 export const Settings: React.FC = () => {
   const { user, isAnonymous, signInWithGoogle, signOut } = useAuth();
-  const { currentRoom, createNewRoom } = useRoom();
+  const { currentGroup, createNewGroup } = useGroup();
   const { toast } = useToast();
   
   const [importData, setImportData] = useState('');
   const [importing, setImporting] = useState(false);
-  const [roomNameForImport, setRoomNameForImport] = useState('Imported Data Room');
+  const [groupNameForImport, setGroupNameForImport] = useState('Imported Data Group');
   const [signingIn, setSigningIn] = useState(false);
 
   const handleGoogleSignIn = async () => {
@@ -66,17 +66,17 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const exportCurrentRoomData = () => {
-    if (!currentRoom) {
-      toast({ title: 'Error', description: 'No room selected', variant: 'destructive' });
+  const exportCurrentGroupData = () => {
+    if (!currentGroup) {
+      toast({ title: 'Error', description: 'No group selected', variant: 'destructive' });
       return;
     }
 
     const exportData = {
-      roomName: currentRoom.name,
-      players: currentRoom.players,
-      tournaments: currentRoom.tournaments,
-      mmrMatches: currentRoom.mmrMatches,
+      groupName: currentGroup.name,
+      players: currentGroup.players,
+      tournaments: currentGroup.tournaments,
+      mmrMatches: currentGroup.mmrMatches,
       exportedAt: new Date().toISOString(),
       exportedBy: user?.uid || 'anonymous'
     };
@@ -87,13 +87,13 @@ export const Settings: React.FC = () => {
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `tttracker-${currentRoom.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `tttracker-${currentGroup.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast({ title: 'Success', description: 'Room data exported successfully!' });
+    toast({ title: 'Success', description: 'Group data exported successfully!' });
   };
 
   const exportLegacyData = () => {
@@ -143,14 +143,14 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const importDataToRoom = async () => {
+  const importDataToGroup = async () => {
     if (!importData.trim()) {
       toast({ title: 'Error', description: 'Please paste the data to import', variant: 'destructive' });
       return;
     }
 
-    if (!roomNameForImport.trim()) {
-      toast({ title: 'Error', description: 'Please enter a room name', variant: 'destructive' });
+    if (!groupNameForImport.trim()) {
+      toast({ title: 'Error', description: 'Please enter a group name', variant: 'destructive' });
       return;
     }
 
@@ -158,8 +158,8 @@ export const Settings: React.FC = () => {
     try {
       const parsedData = JSON.parse(importData);
       
-      // Determine if this is legacy data or room export data
-      const isLegacyData = parsedData.dataType === 'legacy' || !parsedData.roomName;
+      // Determine if this is legacy data or group export data
+      const isLegacyData = parsedData.dataType === 'legacy' || !parsedData.groupName;
       
       let players: Player[] = [];
       let tournaments: Tournament[] = [];
@@ -183,17 +183,17 @@ export const Settings: React.FC = () => {
           mmrMatches = parsedData.mmrMatches;
         }
       } else {
-        // Handle room export data format
+        // Handle group export data format
         players = parsedData.players || [];
         tournaments = parsedData.tournaments || [];
         mmrMatches = parsedData.mmrMatches || [];
       }
 
-      // Create new room with imported data
-      const roomId = await createNewRoom(roomNameForImport.trim(), 'Imported from backup data');
+      // Create new group with imported data
+      const groupId = await createNewGroup(groupNameForImport.trim(), 'Imported from backup data');
       
-      // Update the room with imported data
-      await updateRoom(roomId, {
+      // Update the group with imported data
+      await updateGroup(groupId, {
         players,
         tournaments,
         mmrMatches
@@ -201,12 +201,12 @@ export const Settings: React.FC = () => {
 
       toast({ 
         title: 'Success', 
-        description: `Data imported successfully into room "${roomNameForImport}"!` 
+        description: `Data imported successfully into group "${groupNameForImport}"!` 
       });
 
       // Clear form
       setImportData('');
-      setRoomNameForImport('Imported Data Room');
+      setGroupNameForImport('Imported Data Group');
     } catch (error) {
       console.error('Error importing data:', error);
       toast({ 
@@ -314,35 +314,35 @@ export const Settings: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Export Current Room Data */}
+        {/* Export Current Group Data */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Download className="h-5 w-5" />
-              Export Current Room Data
+              Export Current Group Data
             </CardTitle>
             <CardDescription>
-              Download your current room's data as a backup file
+              Download your current group's data as a backup file
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {currentRoom ? (
+            {currentGroup ? (
               <div className="space-y-4">
                 <div className="p-3 bg-muted rounded-lg">
-                  <p className="font-medium">Current Room: {currentRoom.name}</p>
+                  <p className="font-medium">Current Group: {currentGroup.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {currentRoom.players.length} players • {currentRoom.tournaments.length} tournaments • {currentRoom.mmrMatches.length} MMR matches
+                    {currentGroup.players.length} players • {currentGroup.tournaments.length} tournaments • {currentGroup.mmrMatches.length} MMR matches
                   </p>
                 </div>
-                <Button onClick={exportCurrentRoomData} className="gap-2">
+                <Button onClick={exportCurrentGroupData} className="gap-2">
                   <Download className="h-4 w-4" />
-                  Export Room Data
+                  Export Group Data
                 </Button>
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No room selected. Please select or create a room first.</p>
+                <p>No group selected. Please select or create a group first.</p>
               </div>
             )}
           </CardContent>
@@ -388,17 +388,17 @@ export const Settings: React.FC = () => {
               Import Data
             </CardTitle>
             <CardDescription>
-              Import data from a backup file or legacy export into a new room
+              Import data from a backup file or legacy export into a new group
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="room-name">New Room Name</Label>
+              <Label htmlFor="group-name">New Group Name</Label>
               <Input
-                id="room-name"
-                value={roomNameForImport}
-                onChange={(e) => setRoomNameForImport(e.target.value)}
-                placeholder="Enter name for the new room"
+                id="group-name"
+                value={groupNameForImport}
+                onChange={(e) => setGroupNameForImport(e.target.value)}
+                placeholder="Enter name for the new group"
               />
             </div>
             
@@ -422,15 +422,15 @@ export const Settings: React.FC = () => {
                   1. Export your data from another device or backup<br/>
                   2. Copy the JSON content from the exported file<br/>
                   3. Paste it in the text area above<br/>
-                  4. Enter a name for the new room<br/>
+                  4. Enter a name for the new group<br/>
                   5. Click Import Data
                 </p>
               </div>
             </div>
 
             <Button 
-              onClick={importDataToRoom}
-              disabled={importing || !importData.trim() || !roomNameForImport.trim()}
+              onClick={importDataToGroup}
+              disabled={importing || !importData.trim() || !groupNameForImport.trim()}
               className="gap-2"
             >
               <Upload className="h-4 w-4" />

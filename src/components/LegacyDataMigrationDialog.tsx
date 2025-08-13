@@ -12,8 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useRoom } from '@/contexts/RoomContext';
-import { updateRoom } from '@/services/roomService';
+import { useGroup } from '@/contexts/GroupContext';
+import { updateGroup } from '@/services/groupService';
 import { Player, Tournament, MMRMatch } from '@/types/tournament';
 import { Upload, Users, Trophy, Target, AlertCircle } from 'lucide-react';
 
@@ -40,9 +40,9 @@ export const LegacyDataMigrationDialog: React.FC<Props> = ({
   onMigrationComplete,
   onDismiss
 }) => {
-  const { createNewRoom } = useRoom();
+  const { createNewGroup } = useGroup();
   const { toast } = useToast();
-  const [roomName, setRoomName] = useState('My Table Tennis Room');
+  const [groupName, setGroupName] = useState('My Table Tennis Group');
   const [migrating, setMigrating] = useState(false);
 
   const playerCount = legacyData.players?.length || 0;
@@ -50,8 +50,8 @@ export const LegacyDataMigrationDialog: React.FC<Props> = ({
   const matchCount = legacyData.mmrMatches?.length || 0;
 
   const handleMigration = async () => {
-    if (!roomName.trim()) {
-      toast({ title: 'Error', description: 'Please enter a room name', variant: 'destructive' });
+    if (!groupName.trim()) {
+      toast({ title: 'Error', description: 'Please enter a group name', variant: 'destructive' });
       return;
     }
 
@@ -67,11 +67,11 @@ export const LegacyDataMigrationDialog: React.FC<Props> = ({
       const tournaments = legacyData.currentTournament ? [legacyData.currentTournament] : [];
       const mmrMatches = legacyData.mmrMatches || [];
 
-      // Create new room
-      const roomId = await createNewRoom(roomName.trim(), 'Migrated from local storage');
+      // Create new group
+      const groupId = await createNewGroup(groupName.trim(), 'Migrated from local storage');
       
-      // Update room with legacy data
-      await updateRoom(roomId, {
+      // Update group with legacy data
+      await updateGroup(groupId, {
         players,
         tournaments,
         mmrMatches
@@ -79,7 +79,7 @@ export const LegacyDataMigrationDialog: React.FC<Props> = ({
 
       toast({ 
         title: 'Migration Successful!', 
-        description: `Your data has been migrated to room "${roomName}"`
+        description: `Your data has been migrated to group "${groupName}"`
       });
 
       onMigrationComplete();
@@ -105,7 +105,7 @@ export const LegacyDataMigrationDialog: React.FC<Props> = ({
             Migrate Your Data
           </DialogTitle>
           <DialogDescription>
-            We found data from a previous version of TTTracker. Would you like to migrate it to the new room-based system?
+            We found data from a previous version of TTTracker. Would you like to migrate it to the new group-based system?
           </DialogDescription>
         </DialogHeader>
 
@@ -134,14 +134,14 @@ export const LegacyDataMigrationDialog: React.FC<Props> = ({
             </CardContent>
           </Card>
 
-          {/* Room Name Input */}
+          {/* Group Name Input */}
           <div className="space-y-2">
-            <Label htmlFor="room-name">New Room Name</Label>
+            <Label htmlFor="group-name">New Group Name</Label>
             <Input
-              id="room-name"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              placeholder="Enter a name for your room"
+              id="group-name"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Enter a name for your group"
             />
           </div>
 
@@ -151,7 +151,7 @@ export const LegacyDataMigrationDialog: React.FC<Props> = ({
             <div className="text-sm">
               <p className="font-medium text-amber-800">What happens next:</p>
               <p className="text-amber-700">
-                Your data will be moved to a new room. You can then share this room with others or keep it private.
+                Your data will be moved to a new group. You can then share this group with others or keep it private.
               </p>
             </div>
           </div>
@@ -170,7 +170,7 @@ export const LegacyDataMigrationDialog: React.FC<Props> = ({
           </Button>
           <Button
             onClick={handleMigration}
-            disabled={migrating || !roomName.trim()}
+            disabled={migrating || !groupName.trim()}
             className="w-full sm:w-auto"
           >
             {migrating ? 'Migrating...' : 'Migrate Data'}

@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Users, Trophy, Target } from "lucide-react";
-import { RoomManager } from "@/components/RoomManager";
-import { Player, Tournament } from "@/types/tournament";
+import { GroupManager } from "@/components/GroupManager";
+import { Player, Tournament, Group } from "@/types/tournament";
 
-type AppState = 'no-room' | 'empty-room' | 'setup' | 'tournament-ready' | 'tournament-active' | 'mmr-active';
+type AppState = 'no-group' | 'empty-group' | 'setup' | 'tournament-ready' | 'tournament-active' | 'mmr-active';
 
 interface AppStateManagerProps {
-  currentRoom: any;
+  currentGroup: Group | null;
   players: Player[];
   currentTournament: Tournament | null;
   activeTab: 'tournament' | 'mmr';
@@ -15,15 +15,15 @@ interface AppStateManagerProps {
 }
 
 export const AppStateManager = ({
-  currentRoom,
+  currentGroup,
   players,
   currentTournament,
   activeTab,
   children
 }: AppStateManagerProps) => {
   const getAppState = (): AppState => {
-    if (!currentRoom) return 'no-room';
-    if (players.length === 0) return 'empty-room';
+    if (!currentGroup) return 'no-group';
+    if (players.length === 0) return 'empty-group';
     if (currentTournament?.status === 'active') return 'tournament-active';
     if (activeTab === 'tournament' && players.length >= 2) return 'tournament-ready';
     if (activeTab === 'mmr' && players.length >= 2) return 'mmr-active';
@@ -32,8 +32,8 @@ export const AppStateManager = ({
 
   const currentState = getAppState();
 
-  // Handle no room state
-  if (currentState === 'no-room') {
+  // Handle no group state
+  if (currentState === 'no-group') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-soft-gray to-background flex items-center justify-center">
         <div className="container max-w-4xl mx-auto py-8 px-4">
@@ -52,23 +52,23 @@ export const AppStateManager = ({
           </div>
           
           <Card className="p-6">
-            <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Room</h2>
-            <RoomManager />
+            <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Group</h2>
+            <GroupManager />
           </Card>
         </div>
       </div>
     );
   }
 
-  // Handle empty room state
-  if (currentState === 'empty-room') {
+  // Handle empty group state
+  if (currentState === 'empty-group') {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="p-8 text-center max-w-md">
           <Users className="w-16 h-16 text-muted-foreground mx-auto mb-6 opacity-50" />
-          <h3 className="text-xl font-semibold mb-4">Welcome to {currentRoom.name}!</h3>
+          <h3 className="text-xl font-semibold mb-4">Welcome to {currentGroup.name}!</h3>
           <p className="text-muted-foreground mb-6">
-            Get started by adding players to your room. You can then create tournaments or track MMR matches.
+            Get started by adding players to your group. You can then create tournaments or track MMR matches.
           </p>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">

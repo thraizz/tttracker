@@ -3,26 +3,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Users, ChevronRight, Plus } from "lucide-react";
-import { RoomManager } from "@/components/RoomManager";
-import { useRoom } from "@/contexts/RoomContext";
+import { GroupManager } from "@/components/GroupManager";
+import { useGroup } from "@/contexts/GroupContext";
 
-interface RoomSwitcherModalProps {
+interface GroupSwitcherModalProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-export const RoomSwitcherModal = ({
+export const GroupSwitcherModal = ({
   trigger,
   open,
   onOpenChange
-}: RoomSwitcherModalProps) => {
-  const { userRooms, currentRoom } = useRoom();
+}: GroupSwitcherModalProps) => {
+  const { userGroups, currentGroup } = useGroup();
 
   const defaultTrigger = (
     <Button variant="outline" size="sm">
       <Users className="w-4 h-4 mr-2" />
-      {currentRoom?.name || 'Select Room'}
+      {currentGroup?.name || 'Select Group'}
       <ChevronRight className="w-4 h-4 ml-2" />
     </Button>
   );
@@ -36,21 +36,21 @@ export const RoomSwitcherModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-ping-pong" />
-            Room Management
+            Group Management
           </DialogTitle>
         </DialogHeader>
 
         <div className="mt-6">
-          {currentRoom && (
+          {currentGroup && (
             <Card className="p-4 mb-6 bg-gradient-to-r from-ping-pong/5 to-table-green/5 border-ping-pong/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-lg">{currentRoom.name}</h3>
-                  <p className="text-sm text-muted-foreground">Currently active room</p>
+                  <h3 className="font-semibold text-lg">{currentGroup.name}</h3>
+                  <p className="text-sm text-muted-foreground">Currently active group</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">
-                    {currentRoom.players?.length || 0} players
+                    {currentGroup.players?.length || 0} players
                   </Badge>
                   <Badge className="bg-ping-pong">
                     Active
@@ -60,13 +60,13 @@ export const RoomSwitcherModal = ({
             </Card>
           )}
 
-          <RoomManager />
+          <GroupManager />
 
-          {userRooms.length === 0 && (
+          {userGroups.length === 0 && (
             <div className="text-center py-8">
               <Plus className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium mb-2">No Rooms Available</h3>
-              <p className="text-muted-foreground">Create your first room to get started with tournaments and MMR tracking.</p>
+              <h3 className="text-lg font-medium mb-2">No Groups Available</h3>
+              <p className="text-muted-foreground">Create your first group to get started with tournaments and MMR tracking.</p>
             </div>
           )}
         </div>

@@ -6,29 +6,29 @@ import { AppLayout } from "@/components/AppLayout";
 import { PlayerSidebar } from "@/components/PlayerSidebar";
 import TournamentBracket from "@/components/TournamentBracket";
 import { Player, Tournament as TournamentType, MMRMatch } from "@/types/tournament";
-import { useRoom } from "@/contexts/RoomContext";
-import { updateRoom } from "@/services/roomService";
+import { useGroup } from "@/contexts/GroupContext";
+import { updateGroup } from "@/services/groupService";
 import { generateMatches } from "@/utils/tournamentUtils";
 
 const Tournament = () => {
-  const { currentRoom } = useRoom();
+  const { currentGroup } = useGroup();
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentTournament, setCurrentTournament] = useState<TournamentType | null>(null);
   const [view, setView] = useState<'setup' | 'tournament'>('setup');
   const [mmrMatches, setMmrMatches] = useState<MMRMatch[]>([]);
 
-  // Load data from current room
+  // Load data from current group
   useEffect(() => {
-    if (currentRoom) {
-      const playersWithMmr = currentRoom.players.map((player: Player) => ({
+    if (currentGroup) {
+      const playersWithMmr = currentGroup.players.map((player: Player) => ({
         ...player,
         mmr: player.mmr || 1000,
         peakMmr: player.peakMmr || player.mmr || 1000
       }));
       setPlayers(playersWithMmr);
 
-      // Load the active tournament from room tournaments
-      const activeTournament = currentRoom.tournaments.find(t => t.status === 'active');
+      // Load the active tournament from group tournaments
+      const activeTournament = currentGroup.tournaments.find(t => t.status === 'active');
       if (activeTournament) {
         setCurrentTournament(activeTournament);
         setView('tournament');
@@ -37,18 +37,18 @@ const Tournament = () => {
         setView('setup');
       }
 
-      setMmrMatches(currentRoom.mmrMatches || []);
+      setMmrMatches(currentGroup.mmrMatches || []);
     } else {
-      // Reset state when no room is selected
+      // Reset state when no group is selected
       setPlayers([]);
       setCurrentTournament(null);
       setView('setup');
       setMmrMatches([]);
     }
-  }, [currentRoom]);
+  }, [currentGroup]);
 
   const handleUpdatePlayers = async (updatedPlayers: Player[]) => {
-    if (!currentRoom) return;
+    if (!currentGroup) return;
 
     // Ensure all players have MMR fields when updated
     const playersWithMmr = updatedPlayers.map(player => ({
@@ -58,15 +58,15 @@ const Tournament = () => {
     }));
 
     try {
-      await updateRoom(currentRoom.id, { players: playersWithMmr });
+      await updateGroup(currentGroup.id, { players: playersWithMmr });
       setPlayers(playersWithMmr);
     } catch (error) {
-      console.error('Failed to update players in room:', error);
+      console.error('Failed to update players in group:', error);
     }
   };
 
   const startTournament = async () => {
-    if (players.length < 2 || !currentRoom) return;
+    if (players.length < 2 || !currentGroup) return;
 
     const matches = generateMatches(players);
     const tournament: TournamentType = {
@@ -79,8 +79,8 @@ const Tournament = () => {
     };
 
     try {
-      const updatedTournaments = [...currentRoom.tournaments.filter(t => t.status !== 'active'), tournament];
-      await updateRoom(currentRoom.id, { tournaments: updatedTournaments });
+      const updatedTournaments = [...currentGroup.tournaments.filter(t => t.status !== 'active'), tournament];
+      await updateGroup(currentGroup.id, { tournaments: updatedTournaments });
       setCurrentTournament(tournament);
       setView('tournament');
     } catch (error) {
@@ -90,13 +90,13 @@ const Tournament = () => {
 
 
   const resetTournament = async () => {
-    if (!currentRoom || !currentTournament) return;
+    if (!currentGroup || !currentTournament) return;
 
     try {
-      const updatedTournaments = currentRoom.tournaments.map(t =>
+      const updatedTournaments = currentGroup.tournaments.map(t =>
         t.id === currentTournament.id ? { ...t, status: 'completed' as const } : t
       );
-      await updateRoom(currentRoom.id, { tournaments: updatedTournaments });
+      await updateGroup(currentGroup.id, { tournaments: updatedTournaments });
       setCurrentTournament(null);
       setView('setup');
     } catch (error) {
@@ -133,7 +133,7 @@ const Tournament = () => {
   if (view === 'tournament' && currentTournament) {
     return (
       <AppLayout
-        currentRoom={currentRoom}
+        currentGroup={currentGroup}
         players={players}
         currentTournament={currentTournament}
         mmrMatches={mmrMatches}
@@ -187,7 +187,7 @@ const Tournament = () => {
 
   return (
     <AppLayout
-      currentRoom={currentRoom}
+      currentGroup={currentGroup}
       players={players}
       currentTournament={currentTournament}
       mmrMatches={mmrMatches}

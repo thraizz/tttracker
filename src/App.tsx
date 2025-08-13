@@ -4,11 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import { RoomProvider } from "./contexts/RoomContext";
+import { GroupProvider } from "./contexts/GroupContext";
 import Home from "./pages/Home";
 import Tournament from "./pages/Tournament";
 import MMR from "./pages/MMR";
-import { JoinRoom } from "./pages/JoinRoom";
+import { JoinGroup } from "./pages/JoinGroup";
 import { Settings } from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -18,7 +18,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <RoomProvider>
+        <GroupProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -26,13 +26,13 @@ const App = () => (
               <Route path="/" element={<Home />} />
               <Route path="/tournament" element={<Tournament />} />
               <Route path="/mmr" element={<MMR />} />
-              <Route path="/join/:inviteId" element={<JoinRoom />} />
+              <Route path="/join/:inviteId" element={<JoinGroup />} />
               <Route path="/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </RoomProvider>
+        </GroupProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
