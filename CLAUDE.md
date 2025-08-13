@@ -37,7 +37,7 @@ Both modes use local storage persistence.
 - **UI Library**: shadcn/ui components built on Radix UI primitives
 - **Styling**: Tailwind CSS with custom tournament-themed color palette
 - **State Management**: React useState with localStorage persistence
-- **Routing**: React Router DOM with basic setup/tournament views
+- **Routing**: React Router DOM with Home, Tournament, MMR, Settings, and JoinGroup pages
 - **Data Flow**: Top-down props passing from Index page to components
 
 ### Key Components
