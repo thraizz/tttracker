@@ -75,17 +75,15 @@ export const MatchRecordModal = ({
   };
 
   const recordMatch = async () => {
-    if (!selectedPlayer1 || !selectedPlayer2 || !scorePlayer1 || !scorePlayer2) return;
+    if (!selectedPlayer1 || !selectedPlayer2) return;
     if (selectedPlayer1 === selectedPlayer2) return;
     if (!currentGroup) {
       toast({ title: 'Error', description: 'No group selected', variant: 'destructive' });
       return;
     }
 
-    const p1Score = parseInt(scorePlayer1);
-    const p2Score = parseInt(scorePlayer2);
-
-    if (isNaN(p1Score) || isNaN(p2Score) || p1Score === p2Score) return;
+    const p1Score = parseInt(scorePlayer1) || 0;
+    const p2Score = parseInt(scorePlayer2) || 0;
 
     const player1 = players.find(p => p.id === selectedPlayer1);
     const player2 = players.find(p => p.id === selectedPlayer2);
@@ -239,7 +237,7 @@ export const MatchRecordModal = ({
           </Button>
           <Button
             onClick={recordMatch}
-            disabled={recording || !selectedPlayer1 || !selectedPlayer2 || !scorePlayer1 || !scorePlayer2 || selectedPlayer1 === selectedPlayer2 || parseInt(scorePlayer1) === parseInt(scorePlayer2)}
+            disabled={recording || !selectedPlayer1 || !selectedPlayer2}
             className="flex-1 bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold"
           >
             <Target className="w-4 h-4 mr-2" />
