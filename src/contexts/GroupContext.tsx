@@ -1,16 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Group } from '../types/tournament';
 import { useAuth } from './AuthContext';
-import { getUserGroups, subscribeToGroup, createGroup, joinGroup } from '../services/groupService';
+import { getUserGroups, subscribeToGroup, createGroup, joinGroup, getPublicGroups } from '../services/groupService';
 
 interface GroupContextType {
   currentGroup: Group | null;
   userGroups: Group[];
+  publicGroups: Group[];
   loading: boolean;
   setCurrentGroup: (group: Group | null) => void;
-  createNewGroup: (name: string, description?: string) => Promise<string>;
+  createNewGroup: (name: string, description?: string, settings?: { allowPublicJoin?: boolean; requireApproval?: boolean }) => Promise<string>;
   joinGroupById: (groupId: string) => Promise<void>;
   refreshGroups: () => Promise<void>;
+  refreshPublicGroups: () => Promise<void>;
 }
 
 const GroupContext = createContext<GroupContextType | undefined>(undefined);
@@ -31,6 +33,7 @@ export const GroupProvider: React.FC<GroupProviderProps> = ({ children }) => {
   const { user } = useAuth();
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
   const [userGroups, setUserGroups] = useState<Group[]>([]);
+  const [publicGroups, setPublicGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
 
   const refreshGroups = useCallback(async () => {
@@ -52,40 +55,58 @@ export const GroupProvider: React.FC<GroupProviderProps> = ({ children }) => {
     }
   }, [user, currentGroup]);
 
-  const createNewGroup = async (name: string, description?: string): Promise<string> => {
+  const createNewGroup = async (
+    name: string, 
+    description?: string, 
+    settings?: { allowPublicJoin?: boolean; requireApproval?: boolean }
+  ): Promise<string> => {
     if (!user) throw new Error('User must be authenticated');
 
     const groupData = {
       name,
       description: description || '',
-      isPublic: false,
+      isPublic: settings?.allowPublicJoin || false,
       members: [],
       players: [],
       tournaments: [],
       mmrMatches: [],
       settings: {
-        allowPublicJoin: false,
-        requireApproval: false
+        allowPublicJoin: settings?.allowPublicJoin || false,
+        requireApproval: settings?.requireApproval || false
       }
     };
 
     const groupId = await createGroup(groupData, user.uid);
     await refreshGroups();
+    await refreshPublicGroups();
     return groupId;
   };
+
+  const refreshPublicGroups = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const groups = await getPublicGroups(user.uid);
+      setPublicGroups(groups);
+    } catch (error) {
+      console.error('Error fetching public groups:', error);
+    }
+  }, [user]);
 
   const joinGroupById = async (groupId: string): Promise<void> => {
     if (!user) throw new Error('User must be authenticated');
 
     await joinGroup(groupId, user.uid);
     await refreshGroups();
+    await refreshPublicGroups();
   };
 
   useEffect(() => {
     if (user) {
       refreshGroups();
+      refreshPublicGroups();
     }
-  }, [user, refreshGroups]);
+  }, [user, refreshGroups, refreshPublicGroups]);
 
   // Subscribe to current group updates
   useEffect(() => {
@@ -107,11 +128,13 @@ export const GroupProvider: React.FC<GroupProviderProps> = ({ children }) => {
   const value: GroupContextType = {
     currentGroup,
     userGroups,
+    publicGroups,
     loading,
     setCurrentGroup,
     createNewGroup,
     joinGroupById,
-    refreshGroups
+    refreshGroups,
+    refreshPublicGroups
   };
 
   return (

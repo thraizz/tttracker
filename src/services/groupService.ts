@@ -125,6 +125,44 @@ export const getUserGroups = async (userId: string): Promise<Group[]> => {
   });
 };
 
+export const getPublicGroups = async (userId?: string): Promise<Group[]> => {
+  const q = query(
+    collection(db, GROUPS_COLLECTION),
+    where('settings.allowPublicJoin', '==', true)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs
+    .map(doc => {
+      const data = doc.data() as FirebaseData;
+      
+      // Convert dates in nested objects
+      const processedData = {
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        mmrMatches: data.mmrMatches?.map((match: FirebaseMatch) => ({
+          ...match,
+          completedAt: match.completedAt?.toDate ? match.completedAt.toDate() : new Date(match.completedAt || new Date())
+        })) || [],
+        tournaments: data.tournaments?.map((tournament: FirebaseTournament) => ({
+          ...tournament,
+          createdAt: tournament.createdAt?.toDate ? tournament.createdAt.toDate() : new Date(tournament.createdAt || new Date()),
+          completedAt: tournament.completedAt?.toDate ? tournament.completedAt.toDate() : tournament.completedAt ? new Date(tournament.completedAt) : undefined,
+          matches: tournament.matches?.map((match: FirebaseMatch) => ({
+            ...match,
+            completedAt: match.completedAt?.toDate ? match.completedAt.toDate() : match.completedAt ? new Date(match.completedAt) : undefined
+          })) || []
+        })) || []
+      };
+      
+      return {
+        id: doc.id,
+        ...processedData
+      } as Group;
+    })
+    .filter(group => !userId || !group.members.includes(userId)); // Exclude groups user is already a member of
+};
+
 export const joinGroup = async (groupId: string, userId: string): Promise<void> => {
   const groupRef = doc(db, GROUPS_COLLECTION, groupId);
   await updateDoc(groupRef, {
