@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,8 +13,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createGroupInvite, updateGroup } from '@/services/groupService';
 import { Switch } from '@/components/ui/switch';
 import { GroupApprovalModal } from './GroupApprovalModal';
-import { Plus, Users, Share, Copy, Settings, Clock } from 'lucide-react';
+import { Plus, Users, Share, Copy, Settings, Clock, QrCode } from 'lucide-react';
 import { Group } from '@/types/tournament';
+import QRCode from 'qrcode';
 
 export const GroupManager: React.FC = () => {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ export const GroupManager: React.FC = () => {
   const [newGroupAllowPublicJoin, setNewGroupAllowPublicJoin] = useState(false);
   const [newGroupRequireApproval, setNewGroupRequireApproval] = useState(false);
   const [shareLink, setShareLink] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editGroupName, setEditGroupName] = useState('');
@@ -37,6 +39,7 @@ export const GroupManager: React.FC = () => {
   const [editRequireApproval, setEditRequireApproval] = useState(false);
   const [approvalModalOpen, setApprovalModalOpen] = useState(false);
   const [selectedApprovalGroup, setSelectedApprovalGroup] = useState<Group | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) {
@@ -74,6 +77,18 @@ export const GroupManager: React.FC = () => {
       const inviteId = await createGroupInvite(currentGroup.id, currentGroup.name, user.uid);
       const link = `${window.location.origin}/join/${inviteId}`;
       setShareLink(link);
+      
+      // Generate QR code
+      const qrDataUrl = await QRCode.toDataURL(link, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrDataUrl);
+      
       setShareDialogOpen(true);
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to create share link', variant: 'destructive' });
@@ -430,7 +445,7 @@ export const GroupManager: React.FC = () => {
 
       {/* Share Dialog */}
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Share Group</DialogTitle>
           </DialogHeader>
@@ -438,12 +453,35 @@ export const GroupManager: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               Share this link with others to invite them to your group:
             </p>
+            
             <div className="flex gap-2">
               <Input value={shareLink} readOnly className="flex-1" />
               <Button onClick={copyShareLink} variant="outline" size="icon">
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
+
+            {qrCodeUrl && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <QrCode className="h-4 w-4" />
+                  <span className="text-sm font-medium">QR Code</span>
+                </div>
+                <div className="flex justify-center">
+                  <div className="p-4 bg-white rounded-lg border">
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="QR Code for group invite" 
+                      className="w-48 h-48"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-center text-muted-foreground">
+                  Scan with your phone camera to quickly join the group
+                </p>
+              </div>
+            )}
+            
             <p className="text-xs text-muted-foreground">
               This link will allow others to join your group. Keep it private!
             </p>
