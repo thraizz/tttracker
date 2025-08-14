@@ -10,7 +10,7 @@ import { useGroup } from '@/contexts/GroupContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateGroup } from '@/services/groupService';
 import { Player, Tournament, MMRMatch } from '@/types/tournament';
-import { Download, Upload, FileText, AlertTriangle, ArrowLeft, User, LogIn, LogOut, Chrome } from 'lucide-react';
+import { Download, Upload, FileText, AlertTriangle, ArrowLeft, User, LogIn, LogOut, Chrome, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface LegacyData {
@@ -374,6 +374,41 @@ export const Settings: React.FC = () => {
                 <Download className="h-4 w-4" />
                 Export Legacy Data
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Separator className="my-6" />
+
+        {/* Version Info */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5" />
+              Version Information
+            </CardTitle>
+            <CardDescription>
+              Current build and version details
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Version</p>
+                  <p className="font-mono">1.0.0</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Build Date</p>
+                  <p className="font-mono">{new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Build Environment</p>
+                <p className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                  {import.meta.env.MODE}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
