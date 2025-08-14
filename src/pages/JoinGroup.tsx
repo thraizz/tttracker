@@ -165,14 +165,29 @@ export const JoinGroup: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Join Group</CardTitle>
-          <CardDescription>You've been invited to join a table tennis group</CardDescription>
+          <CardTitle className="text-2xl mb-2">TTTracker</CardTitle>
+          <CardDescription className="text-base">
+            The complete table tennis tracking app for players and groups
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="bg-muted/30 p-4 rounded-lg space-y-3">
+            <h3 className="font-semibold text-center">What is TTTracker?</h3>
+            <div className="space-y-2 text-sm">
+              <p>Track your table tennis progress with two powerful modes:</p>
+              <ul className="space-y-1 ml-4">
+                <li><strong>Tournament Mode:</strong> Run single-elimination brackets for competitive events</li>
+                <li><strong>MMR Mode:</strong> Track skill ratings with continuous 1v1 matches using Elo system</li>
+              </ul>
+              <p>Perfect for offices, clubs, schools, and friend groups who want to organize matches and track their improvement over time.</p>
+            </div>
+          </div>
+
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold">{group.name}</h3>
+            <h4 className="font-semibold">You're invited to join:</h4>
+            <h3 className="text-lg font-bold text-primary">{group.name}</h3>
             {group.description && (
               <p className="text-muted-foreground text-sm">{group.description}</p>
             )}
