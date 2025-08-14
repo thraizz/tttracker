@@ -43,7 +43,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
   return (
     <div className="space-y-6">
       <Tabs defaultValue="leaderboard" className="space-y-6">
-        <div className="flex items-center gap-2 justify-between">
+        <div className="flex flex-col md:flex-row items-center gap-2 justify-between">
           <TabsList className="grid grid-cols-2 w-fit">
             <TabsTrigger value="leaderboard" className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
@@ -96,10 +96,10 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
                       {index + 1}
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between ">
                       <div className="flex items-center gap-4">
                         {/* Rank icon with glow effect */}
-                        <div className="relative">
+                        <div className="relative hidden md:block">
                           <div
                             className="text-4xl filter drop-shadow-lg"
                             style={{
@@ -133,7 +133,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
 
                           {/* Progress bar for rank advancement */}
                           {rankProgress.nextRank && (
-                            <div className="mt-2 space-y-1">
+                            <div className="mt-2 space-y-1 hidden md:block">
                               <div className="flex items-center justify-between text-xs gap-2">
                                 <span className="text-muted-foreground">
                                   Progress to {rankProgress.nextRank.name}
@@ -179,7 +179,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
             ) : (
               <div className="space-y-4">
                 {recentMatches.map((match) => (
-                  <div key={match.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div key={match.id} className="flex flex-col-reverse md:flex-row gap-4 items-center justify-between p-4 bg-muted/30 rounded-lg">
                     <div className="flex items-center gap-4 flex-1">
                       <div className="text-center">
                         <div className="font-semibold">{match.player1.name}</div>
@@ -222,7 +222,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-fit">
                       <Badge variant={match.winner.id === match.player1.id ? "default" : "secondary"}>
                         {match.winner.name} wins
                       </Badge>

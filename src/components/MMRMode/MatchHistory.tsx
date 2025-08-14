@@ -15,7 +15,7 @@ interface MatchHistoryProps {
 
 export const MatchHistory = ({ mmrMatches, players, onUpdateMatch, onDeleteMatch }: MatchHistoryProps) => {
   const [editingMatch, setEditingMatch] = useState<MMRMatch | null>(null);
-  
+
   // Recent matches (last 10)
   const recentMatches = [...mmrMatches].reverse().slice(0, 10);
 
@@ -35,7 +35,7 @@ export const MatchHistory = ({ mmrMatches, players, onUpdateMatch, onDeleteMatch
       ) : (
         <div className="space-y-4">
           {recentMatches.map((match) => (
-            <div key={match.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+            <div key={match.id} className="flex flex-col md:flex-row items-center justify-between p-4 bg-muted/30 rounded-lg">
               <div className="flex items-center gap-4 flex-1">
                 <div className="text-center">
                   <div className="font-semibold">{match.player1.name}</div>
@@ -105,7 +105,7 @@ export const MatchHistory = ({ mmrMatches, players, onUpdateMatch, onDeleteMatch
           ))}
         </div>
       )}
-      
+
       {editingMatch && (
         <EditMatchModal
           match={editingMatch}
