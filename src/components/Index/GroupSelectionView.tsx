@@ -19,9 +19,11 @@ export const GroupSelectionView = ({ user }: GroupSelectionViewProps) => {
             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-ping-pong to-victory-gold flex items-center justify-center">
               <Trophy className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-ping-pong to-victory-gold bg-clip-text text-transparent">
-              TTTracker
-            </h1>
+            <Link to="/">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-ping-pong to-victory-gold bg-clip-text text-transparent">
+                TTTracker
+              </h1>
+            </Link>
           </div>
           <p className="text-muted-foreground text-lg mb-8">
             Tournament brackets and MMR tracking for your table tennis group
@@ -43,7 +45,7 @@ export const GroupSelectionView = ({ user }: GroupSelectionViewProps) => {
             </Link>
           </div>
         </div>
-        
+
         <Card className="p-6">
           <h2 className="text-2xl font-semibold mb-6 text-center">Select or Create a Group</h2>
           <GroupManager />

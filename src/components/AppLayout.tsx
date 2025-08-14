@@ -94,14 +94,14 @@ export const AppLayout = ({
                 </SheetContent>
               </Sheet>
 
-              <div className="items-center gap-3 hidden sm:flex">
+              <Link to="/" className="items-center gap-3 hidden sm:flex">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-ping-pong to-victory-gold flex items-center justify-center">
                   <Trophy className="w-4 h-4 text-white" />
                 </div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-ping-pong to-victory-gold bg-clip-text text-transparent">
                   TTTracker
                 </h1>
-              </div>
+              </Link>
             </div>
 
             {/* Center: Group + Mode Navigation */}

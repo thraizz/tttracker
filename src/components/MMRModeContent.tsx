@@ -23,7 +23,7 @@ interface MMRModeContentProps {
 export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatch, onUpdateMatch, onDeleteMatch }: MMRModeContentProps) => {
   const isDark = useTheme();
   const [editingMatch, setEditingMatch] = useState<MMRMatch | null>(null);
-  
+
   // Sort players by MMR for leaderboard
   const leaderboard = [...players].sort((a, b) => b.mmr - a.mmr);
 
@@ -134,7 +134,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
                           {/* Progress bar for rank advancement */}
                           {rankProgress.nextRank && (
                             <div className="mt-2 space-y-1">
-                              <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center justify-between text-xs gap-2">
                                 <span className="text-muted-foreground">
                                   Progress to {rankProgress.nextRank.name}
                                 </span>
@@ -252,7 +252,7 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
           </Card>
         </TabsContent>
       </Tabs>
-      
+
       {editingMatch && (
         <EditMatchModal
           match={editingMatch}

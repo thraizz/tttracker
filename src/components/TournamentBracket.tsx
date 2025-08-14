@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
 import { Tournament, Match, Player } from "@/types/tournament";
-import { TournamentHeader } from "./TournamentBracket/TournamentHeader";
 import { NextMatchView } from "./TournamentBracket/NextMatchView";
 import { TournamentWinner } from "./TournamentBracket/TournamentWinner";
 import { MatchesList } from "./TournamentBracket/MatchesList";
@@ -134,8 +133,6 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
 
   return (
     <div className="space-y-8">
-      <TournamentHeader tournament={tournament} onReset={onReset} />
-
       {/* View Navigation */}
       {tournament.status === 'active' && nextMatch && (
         <div className="text-center">

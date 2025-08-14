@@ -20,7 +20,7 @@ export const GroupManager: React.FC = () => {
   const { user } = useAuth();
   const { currentGroup, userGroups, publicGroups, createNewGroup, setCurrentGroup, joinGroupById } = useGroup();
   const { toast } = useToast();
-  
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -47,7 +47,7 @@ export const GroupManager: React.FC = () => {
     setCreating(true);
     try {
       await createNewGroup(
-        newGroupName.trim(), 
+        newGroupName.trim(),
         newGroupDescription.trim(),
         {
           allowPublicJoin: newGroupAllowPublicJoin,
@@ -69,7 +69,7 @@ export const GroupManager: React.FC = () => {
 
   const handleShareGroup = async () => {
     if (!currentGroup || !user) return;
-    
+
     try {
       const inviteId = await createGroupInvite(currentGroup.id, currentGroup.name, user.uid);
       const link = `${window.location.origin}/join/${inviteId}`;
@@ -126,57 +126,43 @@ export const GroupManager: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Current Group Display */}
-      {currentGroup && (
+      {/* Your Groups */}
+      {userGroups.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg">{currentGroup.name}</CardTitle>
-                {currentGroup.description && (
-                  <CardDescription>{currentGroup.description}</CardDescription>
-                )}
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Your Groups
+                </CardTitle>
+                <CardDescription>
+                  Quick access to groups you're a member of
+                </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="gap-1">
-                  <Users className="h-3 w-3" />
-                  {currentGroup.members.length}
-                </Badge>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleEditGroup}
-                  className="gap-1"
-                >
-                  <Settings className="h-3 w-3" />
-                  Edit
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleShareGroup}
-                  className="gap-1"
-                >
-                  <Share className="h-3 w-3" />
-                  Share
-                </Button>
-              </div>
+              {currentGroup && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditGroup}
+                    className="gap-1"
+                  >
+                    <Settings className="h-3 w-3" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleShareGroup}
+                    className="gap-1"
+                  >
+                    <Share className="h-3 w-3" />
+                    Share
+                  </Button>
+                </div>
+              )}
             </div>
-          </CardHeader>
-        </Card>
-      )}
-
-      {/* Quick Rejoin Groups */}
-      {userGroups.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Your Groups
-            </CardTitle>
-            <CardDescription>
-              Quick access to groups you're a member of
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -189,12 +175,19 @@ export const GroupManager: React.FC = () => {
                 >
                   <div className="text-left">
                     <div className="font-medium">{group.name}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Users className="h-3 w-3" />
                       {group.members.length} members
+                      {group.description && (
+                        <>
+                          <span>•</span>
+                          <span className="truncate max-w-[120px]">{group.description}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   {currentGroup?.id === group.id && (
-                    <Badge variant="secondary" size="sm">Active</Badge>
+                    <Badge variant="secondary">Active</Badge>
                   )}
                 </Button>
               ))}
@@ -233,8 +226,8 @@ export const GroupManager: React.FC = () => {
           >
             <SelectTrigger>
               <SelectValue placeholder={
-                userGroups.length === 0 && publicGroups.length === 0 
-                  ? "No groups available" 
+                userGroups.length === 0 && publicGroups.length === 0
+                  ? "No groups available"
                   : "Select or switch groups"
               } />
             </SelectTrigger>
@@ -255,7 +248,7 @@ export const GroupManager: React.FC = () => {
                   ))}
                 </>
               )}
-              
+
               {/* Public Groups Section */}
               {publicGroups.length > 0 && (
                 <>
@@ -277,7 +270,7 @@ export const GroupManager: React.FC = () => {
                   ))}
                 </>
               )}
-              
+
               {/* No Groups Available */}
               {userGroups.length === 0 && publicGroups.length === 0 && (
                 <div className="px-2 py-4 text-center text-sm text-muted-foreground">

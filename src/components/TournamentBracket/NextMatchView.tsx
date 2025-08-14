@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy } from "lucide-react";
 import { Match, Tournament } from "@/types/tournament";
 import TournamentGraph from "@/components/TournamentGraph";
-import { TournamentHeader } from "./TournamentHeader";
 
 interface NextMatchViewProps {
   tournament: Tournament;
@@ -16,7 +15,6 @@ export const NextMatchView = ({ tournament, nextMatch, onReset, onProceedToMatch
   return (
     <div className="space-y-8">
       {/* Header */}
-      <TournamentHeader tournament={tournament} onReset={onReset} />
 
       {/* Next Match Title */}
       <div className="text-center">
