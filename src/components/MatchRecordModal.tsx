@@ -16,7 +16,6 @@ interface MatchRecordModalProps {
   onAddMatch: (match: MMRMatch) => void;
   trigger?: React.ReactNode;
   open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 }
 
 export const MatchRecordModal = ({
@@ -40,9 +39,9 @@ export const MatchRecordModal = ({
   const checkForSkunkedScore = (score1: string, score2: string) => {
     const p1Score = parseInt(score1);
     const p2Score = parseInt(score2);
-    
+
     if (isNaN(p1Score) || isNaN(p2Score)) return false;
-    
+
     // Check if either player got skunked (scored 0 while opponent scored > 0)
     return (p1Score === 0 && p2Score > 0) || (p2Score === 0 && p1Score > 0);
   };
@@ -63,19 +62,19 @@ export const MatchRecordModal = ({
       toast({ title: 'Error', description: 'No group selected', variant: 'destructive' });
       return;
     }
-    
+
     const p1Score = parseInt(scorePlayer1);
     const p2Score = parseInt(scorePlayer2);
-    
+
     if (isNaN(p1Score) || isNaN(p2Score) || p1Score === p2Score) return;
-    
+
     const player1 = players.find(p => p.id === selectedPlayer1);
     const player2 = players.find(p => p.id === selectedPlayer2);
-    
+
     if (!player1 || !player2) return;
 
     setRecording(true);
-    
+
     try {
       const winner = p1Score > p2Score ? player1 : player2;
       const result1 = p1Score > p2Score ? 1 : 0;
@@ -196,7 +195,7 @@ export const MatchRecordModal = ({
             onScoreChange={setScorePlayer1}
             players={players}
           />
-          
+
           <PlayerSelectionField
             label="Player 2"
             playerValue={selectedPlayer2}
@@ -213,7 +212,7 @@ export const MatchRecordModal = ({
             variant="outline"
             onClick={() => {
               resetForm();
-              onOpenChange?.(false);
+              onOpenChange(false);
             }}
             className="flex-1"
           >

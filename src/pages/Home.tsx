@@ -17,10 +17,10 @@ const Home = () => {
   const { hasLegacyData, legacyData, migrationChecked, clearLegacyData, markMigrationDismissed } = useLegacyDataMigration();
   const [migrationDialogOpen, setMigrationDialogOpen] = useState(false);
 
-  // Redirect to tournament page if group is selected
+  // Redirect to MMR page if group is selected
   useEffect(() => {
     if (currentGroup && !groupLoading) {
-      navigate('/tournament');
+      navigate('/mmr');
     }
   }, [currentGroup, groupLoading, navigate]);
 

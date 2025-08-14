@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { GroupProvider } from "./contexts/GroupContext";
 import Home from "./pages/Home";
@@ -23,9 +23,11 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Home />} />
+              {/* Redirect to MMR for index */}
+              <Route path="/" element={<Navigate to="/mmr" replace />} />
               <Route path="/tournament" element={<Tournament />} />
               <Route path="/mmr" element={<MMR />} />
+              <Route path="/home" element={<Home />} />
               <Route path="/join/:inviteId" element={<JoinGroup />} />
               <Route path="/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

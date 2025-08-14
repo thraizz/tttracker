@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -45,16 +44,6 @@ export const AppLayout = ({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Determine current tab based on route
-  const getCurrentTab = (): 'tournament' | 'mmr' => {
-    if (location.pathname === '/mmr') return 'mmr';
-    return 'tournament'; // default to tournament for root and /tournament
-  };
-
-  // Handle tab changes via navigation
-  const handleTabChange = (tab: 'tournament' | 'mmr') => {
-    navigate(`/${tab}`);
-  };
 
   const getActivitySummary = () => {
     const recentMatches = mmrMatches.slice(-3);
@@ -121,18 +110,28 @@ export const AppLayout = ({
               />
 
               {currentGroup && (
-                <Tabs value={getCurrentTab()} onValueChange={handleTabChange}>
-                  <TabsList className="grid grid-cols-2">
-                    <TabsTrigger value="tournament" className="flex items-center gap-2">
-                      <Trophy className="w-4 h-4" />
-                      <span className="hidden sm:inline">Tournament</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="mmr" className="flex items-center gap-2">
-                      <Target className="w-4 h-4" />
-                      <span className="hidden sm:inline">MMR</span>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/mmr"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${location.pathname === '/mmr' || location.pathname === '/'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                      }`}
+                  >
+                    <Target className="w-4 h-4" />
+                    <span className="hidden sm:inline">MMR</span>
+                  </Link>
+                  <Link
+                    to="/tournament"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${location.pathname === '/tournament'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                      }`}
+                  >
+                    <Trophy className="w-4 h-4" />
+                    <span className="hidden sm:inline">Tournament</span>
+                  </Link>
+                </div>
               )}
             </div>
 

@@ -101,16 +101,16 @@ const MMR = () => {
       });
 
       // Update matches array
-      const updatedMatches = mmrMatches.map(match => 
+      const updatedMatches = mmrMatches.map(match =>
         match.id === updatedMatch.id ? updatedMatch : match
       );
 
       // Update group
-      await updateGroup(currentGroup.id, { 
+      await updateGroup(currentGroup.id, {
         players: updatedPlayers,
         mmrMatches: updatedMatches
       });
-      
+
       setPlayers(updatedPlayers);
       setMmrMatches(updatedMatches);
     } catch (error) {
@@ -151,11 +151,11 @@ const MMR = () => {
       const updatedMatches = mmrMatches.filter(match => match.id !== matchId);
 
       // Update group
-      await updateGroup(currentGroup.id, { 
+      await updateGroup(currentGroup.id, {
         players: revertedPlayers,
         mmrMatches: updatedMatches
       });
-      
+
       setPlayers(revertedPlayers);
       setMmrMatches(updatedMatches);
     } catch (error) {
