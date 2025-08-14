@@ -47,14 +47,6 @@ export const MatchRecordModal = ({
     return (p1Score === 0 && p2Score > 0) || (p2Score === 0 && p1Score > 0);
   };
 
-  // Check for skunked score and trigger animation
-  useEffect(() => {
-    if (checkForSkunkedScore(scorePlayer1, scorePlayer2)) {
-      setShowSkunkedAnimation(true);
-      const timer = setTimeout(() => setShowSkunkedAnimation(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [scorePlayer1, scorePlayer2]);
 
   const resetForm = () => {
     setSelectedPlayer1("");
@@ -148,9 +140,19 @@ export const MatchRecordModal = ({
       onUpdatePlayers(updatedPlayers);
       onAddMatch(match);
 
-      // Reset form and close modal
-      resetForm();
-      onOpenChange?.(false);
+      // Check for skunked score and trigger animation before closing modal
+      if (checkForSkunkedScore(scorePlayer1, scorePlayer2)) {
+        setShowSkunkedAnimation(true);
+        setTimeout(() => {
+          setShowSkunkedAnimation(false);
+          resetForm();
+          onOpenChange?.(false);
+        }, 3000);
+      } else {
+        // Reset form and close modal immediately for non-skunked scores
+        resetForm();
+        onOpenChange?.(false);
+      }
 
       toast({ title: 'Success', description: 'Match recorded successfully!' });
     } catch (error) {
