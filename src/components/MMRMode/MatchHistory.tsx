@@ -58,7 +58,7 @@ export const MatchHistory = ({ mmrMatches, players, onUpdateMatch, onDeleteMatch
                     {match.score.player1Score} - {match.score.player2Score}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {new Date(match.completedAt).toLocaleDateString()}
+                    {new Date(match.completedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
                 <div className="text-center">
