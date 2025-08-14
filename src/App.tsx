@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { GroupProvider } from "./contexts/GroupContext";
+import { ModalProvider } from "./contexts/ModalContext";
 import Home from "./pages/Home";
 import Tournament from "./pages/Tournament";
 import MMR from "./pages/MMR";
@@ -19,9 +20,10 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <GroupProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+          <ModalProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <Routes>
               {/* Redirect to MMR for index */}
               <Route path="/" element={<Navigate to="/mmr" replace />} />
@@ -33,7 +35,8 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
+            </BrowserRouter>
+          </ModalProvider>
         </GroupProvider>
       </AuthProvider>
     </TooltipProvider>

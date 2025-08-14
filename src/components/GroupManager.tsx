@@ -77,7 +77,7 @@ export const GroupManager: React.FC = () => {
       const inviteId = await createGroupInvite(currentGroup.id, currentGroup.name, user.uid);
       const link = `${window.location.origin}/join/${inviteId}`;
       setShareLink(link);
-      
+
       // Generate QR code
       const qrDataUrl = await QRCode.toDataURL(link, {
         width: 200,
@@ -88,7 +88,7 @@ export const GroupManager: React.FC = () => {
         }
       });
       setQrCodeUrl(qrDataUrl);
-      
+
       setShareDialogOpen(true);
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to create share link', variant: 'destructive' });
@@ -453,7 +453,7 @@ export const GroupManager: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               Share this link with others to invite them to your group:
             </p>
-            
+
             <div className="flex gap-2">
               <Input value={shareLink} readOnly className="flex-1" />
               <Button onClick={copyShareLink} variant="outline" size="icon">
@@ -469,9 +469,9 @@ export const GroupManager: React.FC = () => {
                 </div>
                 <div className="flex justify-center">
                   <div className="p-4 bg-white rounded-lg border">
-                    <img 
-                      src={qrCodeUrl} 
-                      alt="QR Code for group invite" 
+                    <img
+                      src={qrCodeUrl}
+                      alt="QR Code for group invite"
                       className="w-48 h-48"
                     />
                   </div>
@@ -481,8 +481,8 @@ export const GroupManager: React.FC = () => {
                 </p>
               </div>
             )}
-            
-            <p className="text-xs text-muted-foreground">
+
+            <p className="text-xs text-muted-foreground text-center">
               This link will allow others to join your group. Keep it private!
             </p>
           </div>

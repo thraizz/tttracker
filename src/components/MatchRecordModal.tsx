@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Target } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
 import { useGroup } from "@/contexts/GroupContext";
+import { useModal } from "@/contexts/ModalContext";
 import { updateGroup } from "@/services/groupService";
 import { calculateEloChange } from "@/utils/eloUtils";
 import { PlayerSelectionField } from "./MatchRecordModal/PlayerSelectionField";
@@ -15,19 +16,17 @@ interface MatchRecordModalProps {
   onUpdatePlayers: (players: Player[]) => void;
   onAddMatch: (match: MMRMatch) => void;
   trigger?: React.ReactNode;
-  open?: boolean;
 }
 
 export const MatchRecordModal = ({
   players,
   onUpdatePlayers,
   onAddMatch,
-  trigger,
-  open,
-  onOpenChange
+  trigger
 }: MatchRecordModalProps) => {
   const { currentGroup } = useGroup();
   const { toast } = useToast();
+  const { matchRecordModalOpen, setMatchRecordModalOpen } = useModal();
   const [selectedPlayer1, setSelectedPlayer1] = useState<string>("");
   const [selectedPlayer2, setSelectedPlayer2] = useState<string>("");
   const [scorePlayer1, setScorePlayer1] = useState("0");
@@ -145,12 +144,12 @@ export const MatchRecordModal = ({
         setTimeout(() => {
           setShowSkunkedAnimation(false);
           resetForm();
-          onOpenChange?.(false);
+          setMatchRecordModalOpen(false);
         }, 3000);
       } else {
         // Reset form and close modal immediately for non-skunked scores
         resetForm();
-        onOpenChange?.(false);
+        setMatchRecordModalOpen(false);
       }
 
       toast({ title: 'Success', description: 'Match recorded successfully!' });
@@ -174,7 +173,7 @@ export const MatchRecordModal = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={matchRecordModalOpen} onOpenChange={setMatchRecordModalOpen}>
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
@@ -212,7 +211,7 @@ export const MatchRecordModal = ({
             variant="outline"
             onClick={() => {
               resetForm();
-              onOpenChange(false);
+              setMatchRecordModalOpen(false);
             }}
             className="flex-1"
           >

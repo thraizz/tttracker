@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useModal } from "@/contexts/ModalContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ export const PlayerSidebar = ({
 }: PlayerSidebarProps) => {
   const location = useLocation();
   const [playerManagementOpen, setPlayerManagementOpen] = useState(false);
+  const { setMatchRecordModalOpen } = useModal();
 
   // Determine current tab based on route
   const activeTab = location.pathname === '/mmr' ? 'mmr' : 'tournament';
@@ -141,17 +143,21 @@ export const PlayerSidebar = ({
           </div>
 
           {activeTab === 'mmr' && players.length >= 2 && onAddMatch && (
-            <MatchRecordModal
-              players={players}
-              onUpdatePlayers={onUpdatePlayers}
-              onAddMatch={onAddMatch}
-              trigger={
-                <Button size="sm" className="w-full">
-                  <Target className="w-4 h-4 mr-2" />
-                  Quick Match
-                </Button>
-              }
-            />
+            <>
+              <MatchRecordModal
+                players={players}
+                onUpdatePlayers={onUpdatePlayers}
+                onAddMatch={onAddMatch}
+              />
+              <Button 
+                size="sm" 
+                className="w-full"
+                onClick={() => setMatchRecordModalOpen(true)}
+              >
+                <Target className="w-4 h-4 mr-2" />
+                Quick Match
+              </Button>
+            </>
           )}
 
           {quickActions}
