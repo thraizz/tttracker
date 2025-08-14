@@ -29,8 +29,28 @@ export const MatchRecordModal = ({
   const { matchRecordModalOpen, setMatchRecordModalOpen } = useModal();
   const [selectedPlayer1, setSelectedPlayer1] = useState<string>("");
   const [selectedPlayer2, setSelectedPlayer2] = useState<string>("");
-  const [scorePlayer1, setScorePlayer1] = useState("0");
-  const [scorePlayer2, setScorePlayer2] = useState("0");
+  const [scorePlayer1, _setScorePlayer1] = useState("0");
+  const setScorePlayer1 = (value: string) => {
+    if (value === '' || value === '0') {
+      _setScorePlayer1('');
+    } else if (value.startsWith('0')) {
+      // Remove leading 0
+      _setScorePlayer1(value.replace(/^0+/, ''));
+    } else {
+      _setScorePlayer1(value);
+    }
+  };
+  const [scorePlayer2, _setScorePlayer2] = useState("0");
+  const setScorePlayer2 = (value: string) => {
+    if (value === '' || value === '0') {
+      _setScorePlayer2('');
+    } else if (value.startsWith('0')) {
+      // Remove leading 0
+      _setScorePlayer2(value.replace(/^0+/, ''));
+    } else {
+      _setScorePlayer2(value);
+    }
+  };
   const [recording, setRecording] = useState(false);
   const [showSkunkedAnimation, setShowSkunkedAnimation] = useState(false);
 
