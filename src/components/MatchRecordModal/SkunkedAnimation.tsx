@@ -6,7 +6,7 @@ export const SkunkedAnimation = ({ show }: SkunkedAnimationProps) => {
   if (!show) return null;
   
   return (
-    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-lg">
+    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-[60] rounded-lg">
       <div className="text-center space-y-4 animate-bounce">
         <div className="text-6xl animate-pulse">🦨</div>
         <div className="text-4xl font-bold text-white animate-pulse">
