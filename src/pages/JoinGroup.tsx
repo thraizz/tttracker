@@ -8,6 +8,7 @@ import { useGroup } from '@/contexts/GroupContext';
 import { getGroupInvite, consumeGroupInvite, getGroup } from '@/services/groupService';
 import { GroupInvite, Group } from '@/types/tournament';
 import { Users, Calendar, Clock } from 'lucide-react';
+import { JoinGroupModal } from '@/components/JoinGroupModal';
 
 export const JoinGroup: React.FC = () => {
   const { inviteId } = useParams<{ inviteId: string }>();
@@ -21,6 +22,7 @@ export const JoinGroup: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
   useEffect(() => {
     const loadInviteData = async () => {
@@ -74,7 +76,7 @@ export const JoinGroup: React.FC = () => {
     loadInviteData();
   }, [inviteId]);
 
-  const handleJoinGroup = async () => {
+  const handleJoinGroup = async (playerName: string) => {
     if (!invite || !group || !user) return;
 
     setJoining(true);
@@ -91,7 +93,7 @@ export const JoinGroup: React.FC = () => {
       await consumeGroupInvite(invite.id);
       
       // Join the group
-      await joinGroupById(group.id);
+      await joinGroupById(group.id, playerName);
       
       // Set as current group
       setCurrentGroup(group);
@@ -108,6 +110,10 @@ export const JoinGroup: React.FC = () => {
     } finally {
       setJoining(false);
     }
+  };
+
+  const handleShowJoinModal = () => {
+    setShowJoinModal(true);
   };
 
   if (authLoading || loading) {
@@ -199,11 +205,11 @@ export const JoinGroup: React.FC = () => {
 
           <div className="space-y-2">
             <Button
-              onClick={handleJoinGroup}
+              onClick={handleShowJoinModal}
               disabled={joining}
               className="w-full"
             >
-              {joining ? 'Joining...' : 'Join Group'}
+              Join Group
             </Button>
             
             <Button
@@ -216,6 +222,13 @@ export const JoinGroup: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      <JoinGroupModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onJoin={handleJoinGroup}
+        groupName={group.name}
+      />
     </div>
   );
 };

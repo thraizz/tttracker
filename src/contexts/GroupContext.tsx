@@ -10,7 +10,7 @@ interface GroupContextType {
   loading: boolean;
   setCurrentGroup: (group: Group | null) => void;
   createNewGroup: (name: string, description?: string, settings?: { allowPublicJoin?: boolean; requireApproval?: boolean }) => Promise<string>;
-  joinGroupById: (groupId: string) => Promise<void>;
+  joinGroupById: (groupId: string, playerName?: string) => Promise<void>;
   refreshGroups: () => Promise<void>;
   refreshPublicGroups: () => Promise<void>;
 }
@@ -93,10 +93,10 @@ export const GroupProvider: React.FC<GroupProviderProps> = ({ children }) => {
     }
   }, [user]);
 
-  const joinGroupById = async (groupId: string): Promise<void> => {
+  const joinGroupById = async (groupId: string, playerName?: string): Promise<void> => {
     if (!user) throw new Error('User must be authenticated');
 
-    await joinGroup(groupId, user.uid);
+    await joinGroup(groupId, user.uid, playerName);
     await refreshGroups();
     await refreshPublicGroups();
   };
@@ -123,7 +123,7 @@ export const GroupProvider: React.FC<GroupProviderProps> = ({ children }) => {
     });
 
     return unsubscribe;
-  }, [currentGroup?.id]);
+  }, [currentGroup]);
 
   const value: GroupContextType = {
     currentGroup,

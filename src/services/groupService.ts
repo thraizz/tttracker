@@ -15,7 +15,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Group, GroupInvite } from '../types/tournament';
+import { Group, GroupInvite, Player } from '../types/tournament';
 
 // Types for Firebase data conversion
 interface FirebaseData {
@@ -163,11 +163,37 @@ export const getPublicGroups = async (userId?: string): Promise<Group[]> => {
     .filter(group => !userId || !group.members.includes(userId)); // Exclude groups user is already a member of
 };
 
-export const joinGroup = async (groupId: string, userId: string): Promise<void> => {
+export const joinGroup = async (groupId: string, userId: string, playerName?: string): Promise<void> => {
   const groupRef = doc(db, GROUPS_COLLECTION, groupId);
-  await updateDoc(groupRef, {
+  
+  // Get current group data to check if player already exists
+  const groupSnap = await getDoc(groupRef);
+  if (!groupSnap.exists()) {
+    throw new Error('Group not found');
+  }
+  
+  const groupData = groupSnap.data();
+  const existingPlayer = groupData.players?.find((player: Player) => player.id === userId);
+  
+  const updates: Record<string, unknown> = {
     members: arrayUnion(userId)
-  });
+  };
+  
+  // If player doesn't exist and we have a name, create player profile
+  if (!existingPlayer && playerName) {
+    const newPlayer = {
+      id: userId,
+      name: playerName,
+      wins: 0,
+      losses: 0,
+      mmr: 1000,
+      peakMmr: 1000
+    };
+    
+    updates.players = arrayUnion(newPlayer);
+  }
+  
+  await updateDoc(groupRef, updates);
 };
 
 export const leaveGroup = async (groupId: string, userId: string): Promise<void> => {
