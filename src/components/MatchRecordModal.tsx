@@ -31,8 +31,8 @@ export const MatchRecordModal = ({
   const { toast } = useToast();
   const [selectedPlayer1, setSelectedPlayer1] = useState<string>("");
   const [selectedPlayer2, setSelectedPlayer2] = useState<string>("");
-  const [scorePlayer1, setScorePlayer1] = useState("");
-  const [scorePlayer2, setScorePlayer2] = useState("");
+  const [scorePlayer1, setScorePlayer1] = useState("0");
+  const [scorePlayer2, setScorePlayer2] = useState("0");
   const [recording, setRecording] = useState(false);
   const [showSkunkedAnimation, setShowSkunkedAnimation] = useState(false);
 
@@ -51,8 +51,8 @@ export const MatchRecordModal = ({
   const resetForm = () => {
     setSelectedPlayer1("");
     setSelectedPlayer2("");
-    setScorePlayer1("");
-    setScorePlayer2("");
+    setScorePlayer1("0");
+    setScorePlayer2("0");
     setShowSkunkedAnimation(false);
   };
 

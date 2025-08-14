@@ -52,8 +52,7 @@ export const PlayerSelectionField = ({
         <label className="text-sm font-medium mb-2 block">{label} Score</label>
         <Input
           type="number"
-          placeholder="0"
-          value={scoreValue}
+          value={scoreValue || "0"}
           onChange={(e) => onScoreChange(e.target.value)}
           className="text-center text-lg font-semibold"
         />
