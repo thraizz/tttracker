@@ -399,15 +399,25 @@ export const Settings: React.FC = () => {
                   <p className="font-mono">1.0.0</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Build Date</p>
-                  <p className="font-mono">{new Date().toLocaleDateString()}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Build Environment</p>
+                  <p className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                    {import.meta.env.MODE}
+                  </p>
                 </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Build Environment</p>
-                <p className="font-mono text-xs bg-muted px-2 py-1 rounded">
-                  {import.meta.env.MODE}
-                </p>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Git Commit</p>
+                  <p className="font-mono text-xs bg-muted px-2 py-1 rounded break-all">
+                    {__GIT_HASH__.substring(0, 12)}...
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Build Timestamp</p>
+                  <p className="font-mono text-xs bg-muted px-2 py-1 rounded">
+                    {new Date(__BUILD_TIMESTAMP__).toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>
