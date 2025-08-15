@@ -150,7 +150,7 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-center">Upgrade to Google Account</DialogTitle>
+          <DialogTitle className="text-center">Change to Google Account</DialogTitle>
           <DialogDescription className="text-center">
             Get the most out of TTTracker with cross-device sync and data backup
           </DialogDescription>
@@ -188,7 +188,7 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
               disabled={isUpgrading}
               className="w-full"
             >
-              {isUpgrading ? 'Upgrading...' : 'Upgrade with Google'}
+              {isUpgrading ? 'Changing...' : 'Change to Google'}
             </Button>
             
             <Button

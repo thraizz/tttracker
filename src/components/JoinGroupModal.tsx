@@ -234,7 +234,7 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
                 {isAnonymous ? (
                   <>
                     <Cloud className="mr-2 h-4 w-4" />
-                    Upgrade to Google Account
+                    Change to Google Account
                   </>
                 ) : (
                   <>

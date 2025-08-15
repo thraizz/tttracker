@@ -325,7 +325,7 @@ export const Settings: React.FC = () => {
                   {isAnonymous ? (
                     <>
                       <Cloud className="h-4 w-4" />
-                      Upgrade to Google Account
+                      Change to Google Account
                     </>
                   ) : (
                     <>
