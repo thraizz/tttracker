@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 interface ModalContextType {
   matchRecordModalOpen: boolean;
@@ -22,12 +22,14 @@ interface ModalProviderProps {
 export const ModalProvider = ({ children }: ModalProviderProps) => {
   const [matchRecordModalOpen, setMatchRecordModalOpen] = useState(false);
 
+  const value = useMemo(() => ({
+    matchRecordModalOpen,
+    setMatchRecordModalOpen
+  }), [matchRecordModalOpen]);
+
   return (
     <ModalContext.Provider
-      value={{
-        matchRecordModalOpen,
-        setMatchRecordModalOpen
-      }}
+      value={value}
     >
       {children}
     </ModalContext.Provider>

@@ -24,17 +24,17 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-            <Routes>
-              {/* Redirect to MMR for index */}
-              <Route path="/" element={<Navigate to="/mmr" replace />} />
-              <Route path="/tournament" element={<Tournament />} />
-              <Route path="/mmr" element={<MMR />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/join/:inviteId" element={<JoinGroup />} />
-              <Route path="/settings" element={<Settings />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+              <Routes>
+                {/* Redirect to MMR for index */}
+                <Route path="/" element={<Navigate to="/mmr" replace />} />
+                <Route path="/tournament" element={<Tournament />} />
+                <Route path="/mmr" element={<MMR />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/join/:inviteId" element={<JoinGroup />} />
+                <Route path="/settings" element={<Settings />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </BrowserRouter>
           </ModalProvider>
         </GroupProvider>

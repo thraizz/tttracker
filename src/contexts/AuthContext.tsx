@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import {
   User,
   signInAnonymously,
   onAuthStateChanged,
@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      
+
       // Auto sign in anonymously if no user
       if (!user) {
         signInAnonymously(auth).catch(console.error);
@@ -50,16 +50,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const signInAnonymous = async () => {
+  const signInAnonymous = useCallback(async () => {
     try {
       await signInAnonymously(auth);
     } catch (error) {
       console.error('Error signing in anonymously:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     try {
       const provider = new GoogleAuthProvider();
       provider.addScope('profile');
@@ -69,25 +69,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Error signing in with Google:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await firebaseSignOut(auth);
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
     }
-  };
+  }, []);
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     loading,
     isAnonymous: user?.isAnonymous || false,
     signInAnonymous,
     signInWithGoogle,
     signOut
-  };
+  }), [user, loading, signInAnonymous, signInWithGoogle, signOut]);
 
   return (
     <AuthContext.Provider value={value}>

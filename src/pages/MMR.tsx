@@ -172,17 +172,6 @@ const MMR = () => {
     />
   );
 
-  // Create quick actions based on current state
-  const quickActions = (
-    <div className="space-y-2">
-      {players.length >= 2 && (
-        <Button size="sm" className="w-full" variant="outline">
-          <Target className="w-4 h-4 mr-2" />
-          Quick Match
-        </Button>
-      )}
-    </div>
-  );
 
   return (
     <AppLayout
@@ -191,7 +180,6 @@ const MMR = () => {
       currentTournament={null}
       mmrMatches={mmrMatches}
       sidebarContent={sidebarContent}
-      quickActions={quickActions}
     >
       <MMRModeContent
         players={players}
