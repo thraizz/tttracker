@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { User, LogIn } from 'lucide-react';
+import { User, LogIn, Sparkles, Cloud } from 'lucide-react';
+import { userProfileService, NameSuggestion } from '@/services/userProfileService';
+import { GoogleUpgradeModal } from './GoogleUpgradeModal';
 
 interface JoinGroupModalProps {
   isOpen: boolean;
@@ -25,32 +27,67 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
   const [playerName, setPlayerName] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [nameSuggestions, setNameSuggestions] = useState<NameSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Pre-fill name if user is authenticated and has a display name
-  React.useEffect(() => {
-    if (user && !isAnonymous && user.displayName) {
-      setPlayerName(user.displayName);
-    }
-  }, [user, isAnonymous]);
+  // Load name suggestions when modal opens
+  useEffect(() => {
+    const loadNameSuggestions = async () => {
+      if (isOpen && user) {
+        const suggestions = await userProfileService.getNameSuggestions();
+        setNameSuggestions(suggestions);
+        
+        // Auto-fill with first suggestion if available and name is empty
+        if (suggestions.length > 0 && !playerName) {
+          setPlayerName(suggestions[0].name);
+        }
+      }
+    };
+
+    loadNameSuggestions();
+  }, [isOpen, user, playerName]);
 
   const handleGoogleSignIn = async () => {
-    setIsSigningIn(true);
-    try {
-      await signInWithGoogle();
-      toast({
-        title: 'Success',
-        description: 'Signed in with Google successfully!'
-      });
-    } catch (error) {
-      console.error('Google sign-in error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to sign in with Google. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSigningIn(false);
+    if (isAnonymous) {
+      // Show upgrade modal for anonymous users
+      setShowUpgradeModal(true);
+    } else {
+      // Direct Google sign-in for new users
+      setIsSigningIn(true);
+      try {
+        await signInWithGoogle();
+        toast({
+          title: 'Success',
+          description: 'Signed in with Google successfully!'
+        });
+      } catch (error) {
+        console.error('Google sign-in error:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to sign in with Google. Please try again.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsSigningIn(false);
+      }
     }
+  };
+
+  const handleUpgradeSuccess = () => {
+    setShowUpgradeModal(false);
+    // Reload suggestions since user is now authenticated
+    const loadNameSuggestions = async () => {
+      if (user) {
+        const suggestions = await userProfileService.getNameSuggestions();
+        setNameSuggestions(suggestions);
+        
+        if (suggestions.length > 0 && !playerName) {
+          setPlayerName(suggestions[0].name);
+        }
+      }
+    };
+    loadNameSuggestions();
   };
 
   const handleJoinGroup = async () => {
@@ -79,11 +116,28 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
     }
   };
 
-  const handleClose = () => {
-    // Only clear if user was anonymous, keep prefilled name for authenticated users
-    if (isAnonymous) {
-      setPlayerName('');
+  const handleSuggestionSelect = (suggestion: NameSuggestion) => {
+    setPlayerName(suggestion.name);
+    setShowSuggestions(false);
+  };
+
+  const getSuggestionLabel = (suggestion: NameSuggestion) => {
+    switch (suggestion.source) {
+      case 'google':
+        return 'Google Account';
+      case 'saved':
+        return 'Previously Used';
+      case 'previous':
+        return suggestion.groupName ? `From ${suggestion.groupName}` : 'Previous Group';
+      default:
+        return '';
     }
+  };
+
+  const handleClose = () => {
+    setPlayerName('');
+    setShowSuggestions(false);
+    setShowUpgradeModal(false);
     onClose();
   };
 
@@ -110,7 +164,21 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
           
           {/* Player Name Input */}
           <div className="space-y-2">
-            <Label htmlFor="playerName">Your Name</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="playerName">Your Name</Label>
+              {nameSuggestions.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSuggestions(!showSuggestions)}
+                  className="h-auto p-1 text-xs"
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Suggestions
+                </Button>
+              )}
+            </div>
             <Input
               id="playerName"
               placeholder="Enter your name"
@@ -123,6 +191,26 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
                 }
               }}
             />
+            
+            {/* Name Suggestions */}
+            {showSuggestions && nameSuggestions.length > 0 && (
+              <div className="border rounded-md p-2 bg-muted/50 space-y-1">
+                <div className="text-xs text-muted-foreground mb-2">Quick suggestions:</div>
+                {nameSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleSuggestionSelect(suggestion)}
+                    className="w-full text-left p-2 text-sm rounded hover:bg-muted transition-colors flex items-center justify-between"
+                  >
+                    <span className="font-medium">{suggestion.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {getSuggestionLabel(suggestion)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Google Sign In Button (only show if anonymous) */}
@@ -143,8 +231,17 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
                 disabled={isSigningIn}
                 className="w-full"
               >
-                <LogIn className="mr-2 h-4 w-4" />
-                {isSigningIn ? 'Signing in...' : 'Sign in with Google'}
+                {isAnonymous ? (
+                  <>
+                    <Cloud className="mr-2 h-4 w-4" />
+                    Upgrade to Google Account
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-4 w-4" />
+                    {isSigningIn ? 'Signing in...' : 'Sign in with Google'}
+                  </>
+                )}
               </Button>
             </div>
           )}
@@ -169,6 +266,13 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* Google Upgrade Modal */}
+      <GoogleUpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onSuccess={handleUpgradeSuccess}
+      />
     </Dialog>
   );
 };

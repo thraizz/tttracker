@@ -5,9 +5,13 @@ import {
   onAuthStateChanged,
   signOut as firebaseSignOut,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  linkWithCredential,
+  AuthCredential
 } from 'firebase/auth';
 import { auth } from '../firebase';
+import { storageService } from '../services/storageService';
+import { userProfileService } from '../services/userProfileService';
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +19,7 @@ interface AuthContextType {
   isAnonymous: boolean;
   signInAnonymous: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  upgradeToGoogle: () => Promise<{ success: boolean; requiresMerge?: boolean; existingUser?: User }>;
   signOut: () => Promise<void>;
 }
 
@@ -71,6 +76,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const upgradeToGoogle = useCallback(async (): Promise<{ success: boolean; requiresMerge?: boolean; existingUser?: User }> => {
+    const anonymousUser = auth.currentUser;
+    if (!anonymousUser || !anonymousUser.isAnonymous) {
+      throw new Error('User is not anonymous');
+    }
+
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+      
+      // Try to link the anonymous account with Google
+      const result = await signInWithPopup(auth, provider);
+      
+      // Successful link - migrate data
+      await storageService.migrateLocalDataToCloud();
+      await userProfileService.migrateAnonymousProfile(result.user.uid);
+      
+      return { success: true };
+    } catch (error: unknown) {
+      console.error('Error upgrading to Google auth:', error);
+      
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'auth/credential-already-in-use') {
+        // Google account already exists - user needs to choose merge or keep separate
+        return { 
+          success: false, 
+          requiresMerge: true,
+          existingUser: 'customData' in error ? (error as any).customData?.user : undefined
+        };
+      }
+      
+      throw error;
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       await firebaseSignOut(auth);
@@ -86,8 +126,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAnonymous: user?.isAnonymous || false,
     signInAnonymous,
     signInWithGoogle,
+    upgradeToGoogle,
     signOut
-  }), [user, loading, signInAnonymous, signInWithGoogle, signOut]);
+  }), [user, loading, signInAnonymous, signInWithGoogle, upgradeToGoogle, signOut]);
 
   return (
     <AuthContext.Provider value={value}>

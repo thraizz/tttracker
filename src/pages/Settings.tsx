@@ -10,8 +10,9 @@ import { useGroup } from '@/contexts/GroupContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateGroup } from '@/services/groupService';
 import { Player, Tournament, MMRMatch } from '@/types/tournament';
-import { Download, Upload, FileText, AlertTriangle, ArrowLeft, User, LogIn, LogOut, Chrome, Info } from 'lucide-react';
+import { Download, Upload, FileText, AlertTriangle, ArrowLeft, User, LogIn, LogOut, Chrome, Info, Cloud } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { GoogleUpgradeModal } from '@/components/GoogleUpgradeModal';
 
 interface LegacyData {
   players?: Player[];
@@ -30,24 +31,39 @@ export const Settings: React.FC = () => {
   const [importing, setImporting] = useState(false);
   const [groupNameForImport, setGroupNameForImport] = useState('Imported Data Group');
   const [signingIn, setSigningIn] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const handleGoogleSignIn = async () => {
-    setSigningIn(true);
-    try {
-      await signInWithGoogle();
-      toast({ 
-        title: 'Success', 
-        description: 'Successfully signed in with Google!' 
-      });
-    } catch (error) {
-      toast({ 
-        title: 'Error', 
-        description: 'Failed to sign in with Google. Please try again.',
-        variant: 'destructive' 
-      });
-    } finally {
-      setSigningIn(false);
+    if (isAnonymous) {
+      // Show upgrade modal for anonymous users
+      setShowUpgradeModal(true);
+    } else {
+      // Direct Google sign-in for new users
+      setSigningIn(true);
+      try {
+        await signInWithGoogle();
+        toast({ 
+          title: 'Success', 
+          description: 'Successfully signed in with Google!' 
+        });
+      } catch (error) {
+        toast({ 
+          title: 'Error', 
+          description: 'Failed to sign in with Google. Please try again.',
+          variant: 'destructive' 
+        });
+      } finally {
+        setSigningIn(false);
+      }
     }
+  };
+
+  const handleUpgradeSuccess = () => {
+    setShowUpgradeModal(false);
+    toast({ 
+      title: 'Success', 
+      description: 'Successfully upgraded to Google account! Your data is now synced across devices.' 
+    });
   };
 
   const handleSignOut = async () => {
@@ -306,8 +322,17 @@ export const Settings: React.FC = () => {
                   disabled={signingIn}
                   className="gap-2 bg-blue-600 hover:bg-blue-700"
                 >
-                  <Chrome className="h-4 w-4" />
-                  {signingIn ? 'Signing in...' : 'Sign in with Google'}
+                  {isAnonymous ? (
+                    <>
+                      <Cloud className="h-4 w-4" />
+                      Upgrade to Google Account
+                    </>
+                  ) : (
+                    <>
+                      <Chrome className="h-4 w-4" />
+                      {signingIn ? 'Signing in...' : 'Sign in with Google'}
+                    </>
+                  )}
                 </Button>
               </div>
             )}
@@ -483,6 +508,13 @@ export const Settings: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Google Upgrade Modal */}
+        <GoogleUpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          onSuccess={handleUpgradeSuccess}
+        />
       </div>
     </div>
   );

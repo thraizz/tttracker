@@ -6,6 +6,7 @@ export interface Player {
   losses: number;
   mmr: number;
   peakMmr: number;
+  isAnonymous?: boolean;
 }
 
 export interface Match {

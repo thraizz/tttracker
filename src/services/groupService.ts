@@ -14,8 +14,10 @@ import {
   onSnapshot,
   Timestamp
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { Group, GroupInvite, Player } from '../types/tournament';
+import { userProfileService } from './userProfileService';
+import { storageService } from './storageService';
 
 // Types for Firebase data conversion
 interface FirebaseData {
@@ -39,6 +41,15 @@ interface FirebaseTournament {
 
 const GROUPS_COLLECTION = 'groups';
 const GROUP_INVITES_COLLECTION = 'groupInvites';
+
+// Helper function to cache group memberships for anonymous users
+const cacheGroupMembershipForAnonymous = async (groupId: string): Promise<void> => {
+  const existingMemberships = await storageService.load('groupMemberships') || [];
+  if (!existingMemberships.includes(groupId)) {
+    existingMemberships.push(groupId);
+    await storageService.save('groupMemberships', existingMemberships);
+  }
+};
 
 export const createGroup = async (
   groupData: Omit<Group, 'id' | 'createdAt'>,
@@ -181,16 +192,26 @@ export const joinGroup = async (groupId: string, userId: string, playerName?: st
   
   // If player doesn't exist and we have a name, create player profile
   if (!existingPlayer && playerName) {
+    const user = auth.currentUser;
     const newPlayer = {
       id: userId,
       name: playerName,
       wins: 0,
       losses: 0,
       mmr: 1000,
-      peakMmr: 1000
+      peakMmr: 1000,
+      isAnonymous: user?.isAnonymous || false
     };
     
     updates.players = arrayUnion(newPlayer);
+    
+    // Record name usage for smart suggestions
+    await userProfileService.recordNameUsage(playerName, groupData.name);
+    
+    // Cache group membership for anonymous users
+    if (user?.isAnonymous) {
+      await cacheGroupMembershipForAnonymous(groupId);
+    }
   }
   
   await updateDoc(groupRef, updates);
