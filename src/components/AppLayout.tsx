@@ -26,7 +26,6 @@ interface AppLayoutProps {
   mmrMatches: MMRMatch[];
   children: React.ReactNode;
   sidebarContent?: React.ReactNode;
-  quickActions?: React.ReactNode;
 }
 
 export const AppLayout = ({
@@ -35,8 +34,7 @@ export const AppLayout = ({
   currentTournament,
   mmrMatches,
   children,
-  sidebarContent,
-  quickActions
+  sidebarContent
 }: AppLayoutProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -182,12 +180,6 @@ export const AppLayout = ({
               {!sidebarCollapsed && sidebarContent}
             </div>
 
-            {/* Quick Actions */}
-            {!sidebarCollapsed && quickActions && (
-              <div className="p-4 border-t">
-                {quickActions}
-              </div>
-            )}
           </aside>
         )}
 

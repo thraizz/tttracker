@@ -1,32 +1,27 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { useModal } from "@/contexts/ModalContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Users, Trophy, Target, Settings2 } from "lucide-react";
+import { Plus, Users, Trophy, Settings2 } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
 import PlayerManagement from "@/components/PlayerManagement";
-import { MatchRecordModal } from "@/components/MatchRecordModal";
 import { getRankByMmr } from "@/utils/rankSystem";
 
 interface PlayerSidebarProps {
   players: Player[];
   onUpdatePlayers: (players: Player[]) => void;
-  quickActions?: React.ReactNode;
   onAddMatch?: (match: MMRMatch) => void;
 }
 
 export const PlayerSidebar = ({
   players,
   onUpdatePlayers,
-  quickActions,
   onAddMatch
 }: PlayerSidebarProps) => {
   const location = useLocation();
   const [playerManagementOpen, setPlayerManagementOpen] = useState(false);
-  const { setMatchRecordModalOpen } = useModal();
 
   // Determine current tab based on route
   const activeTab = location.pathname === '/mmr' ? 'mmr' : 'tournament';
@@ -134,35 +129,6 @@ export const PlayerSidebar = ({
         )}
       </div>
 
-      {/* Quick Actions Section */}
-      <div className="mt-auto p-4 border-t">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-4 h-4 text-ping-pong" />
-            <span className="font-medium text-sm">Quick Actions</span>
-          </div>
-
-          {activeTab === 'mmr' && players.length >= 2 && onAddMatch && (
-            <>
-              <MatchRecordModal
-                players={players}
-                onUpdatePlayers={onUpdatePlayers}
-                onAddMatch={onAddMatch}
-              />
-              <Button 
-                size="sm" 
-                className="w-full"
-                onClick={() => setMatchRecordModalOpen(true)}
-              >
-                <Target className="w-4 h-4 mr-2" />
-                Quick Match
-              </Button>
-            </>
-          )}
-
-          {quickActions}
-        </div>
-      </div>
     </div>
   );
 };

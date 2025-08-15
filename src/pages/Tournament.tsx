@@ -113,21 +113,6 @@ const Tournament = () => {
     />
   );
 
-  // Create quick actions based on current state
-  const quickActions = (
-    <div className="space-y-2">
-      {players.length >= 2 && !currentTournament && (
-        <Button
-          onClick={startTournament}
-          size="sm"
-          className="w-full bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold"
-        >
-          <Trophy className="w-4 h-4 mr-2" />
-          Start Tournament
-        </Button>
-      )}
-    </div>
-  );
 
   // Handle tournament bracket view within the layout
   if (view === 'tournament' && currentTournament) {
@@ -138,7 +123,6 @@ const Tournament = () => {
         currentTournament={currentTournament}
         mmrMatches={mmrMatches}
         sidebarContent={sidebarContent}
-        quickActions={quickActions}
       >
         <TournamentBracket
           tournament={currentTournament}
@@ -192,7 +176,6 @@ const Tournament = () => {
       currentTournament={currentTournament}
       mmrMatches={mmrMatches}
       sidebarContent={sidebarContent}
-      quickActions={quickActions}
     >
       {renderMainContent()}
     </AppLayout>
