@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createGroupInvite, updateGroup } from '@/services/groupService';
 import { Switch } from '@/components/ui/switch';
 import { GroupApprovalModal } from './GroupApprovalModal';
+import { JoinGroupModal } from './JoinGroupModal';
 import { Plus, Users, Share, Copy, Settings, Clock, QrCode } from 'lucide-react';
 import { Group } from '@/types/tournament';
 import QRCode from 'qrcode';
@@ -39,6 +40,8 @@ export const GroupManager: React.FC = () => {
   const [editRequireApproval, setEditRequireApproval] = useState(false);
   const [approvalModalOpen, setApprovalModalOpen] = useState(false);
   const [selectedApprovalGroup, setSelectedApprovalGroup] = useState<Group | null>(null);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [selectedJoinGroup, setSelectedJoinGroup] = useState<Group | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleCreateGroup = async () => {
@@ -139,6 +142,20 @@ export const GroupManager: React.FC = () => {
     }
   };
 
+  const handleJoinGroup = async (playerName: string) => {
+    if (!selectedJoinGroup) return;
+    
+    try {
+      await joinGroupById(selectedJoinGroup.id, playerName);
+      toast({ title: 'Success', description: `Joined ${selectedJoinGroup.name}!` });
+      setJoinModalOpen(false);
+      setSelectedJoinGroup(null);
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to join group', variant: 'destructive' });
+      throw error; // Re-throw to let the modal handle the error
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Your Groups */}
@@ -226,12 +243,9 @@ export const GroupManager: React.FC = () => {
                     setApprovalModalOpen(true);
                     return;
                   }
-                  try {
-                    await joinGroupById(groupId);
-                    toast({ title: 'Success', description: `Joined ${group.name}!` });
-                  } catch (error) {
-                    toast({ title: 'Error', description: 'Failed to join group', variant: 'destructive' });
-                  }
+                  // Show join modal to prompt for player name
+                  setSelectedJoinGroup(group);
+                  setJoinModalOpen(true);
                 }
               } else {
                 const group = userGroups.find(g => g.id === value);
@@ -501,6 +515,19 @@ export const GroupManager: React.FC = () => {
           onRequestSent={() => {
             // Handle request sent - could track pending requests here
           }}
+        />
+      )}
+
+      {/* Join Group Modal */}
+      {selectedJoinGroup && (
+        <JoinGroupModal
+          isOpen={joinModalOpen}
+          onClose={() => {
+            setJoinModalOpen(false);
+            setSelectedJoinGroup(null);
+          }}
+          onJoin={handleJoinGroup}
+          groupName={selectedJoinGroup.name}
         />
       )}
     </div>
