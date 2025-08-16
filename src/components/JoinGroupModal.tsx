@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { User, LogIn, Sparkles, Cloud } from 'lucide-react';
+import { User, LogIn, Sparkles, Cloud, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { userProfileService, NameSuggestion } from '@/services/userProfileService';
 import { GoogleUpgradeModal } from './GoogleUpgradeModal';
+import { AuthenticationError, AuthError } from '@/types/errors';
 
 interface JoinGroupModalProps {
   isOpen: boolean;
@@ -106,13 +107,94 @@ export const JoinGroupModal: React.FC<JoinGroupModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Join group error:', error);
+      handleJoinError(error);
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  const handleJoinError = (error: unknown) => {
+    if (error instanceof AuthenticationError) {
+      const retryAction = error.getRetryAction();
+      
+      toast({
+        title: getErrorTitle(error),
+        description: error.userMessage || error.message,
+        variant: 'destructive',
+        action: retryAction ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleRetryAction(retryAction)}
+          >
+            {getRetryActionLabel(retryAction)}
+          </Button>
+        ) : undefined
+      });
+    } else {
+      // Fallback for non-AuthenticationError
       toast({
         title: 'Error',
         description: 'Failed to join group. Please try again.',
         variant: 'destructive'
       });
-    } finally {
-      setIsJoining(false);
+    }
+  };
+
+  const getErrorTitle = (error: AuthenticationError): string => {
+    switch (error.code) {
+      case 'PWA_OFFLINE_AUTH_MISMATCH':
+        return 'Connection Required';
+      case 'PWA_STALE_TOKEN':
+      case 'PWA_REFRESH_FAILED':
+        return 'Session Expired';
+      case 'USER_NOT_AUTHENTICATED':
+        return 'Sign In Required';
+      case 'ALREADY_GROUP_MEMBER':
+        return 'Already a Member';
+      case 'GROUP_NOT_FOUND':
+        return 'Group Not Found';
+      default:
+        return 'Join Failed';
+    }
+  };
+
+  const getRetryActionLabel = (action: string): string => {
+    switch (action) {
+      case 'refresh_and_signin':
+        return 'Refresh & Sign In';
+      case 'check_connection':
+        return 'Check Connection';
+      case 'sign_in_required':
+        return 'Sign In';
+      case 'retry':
+        return 'Try Again';
+      default:
+        return 'Retry';
+    }
+  };
+
+  const handleRetryAction = (action: string) => {
+    switch (action) {
+      case 'refresh_and_signin':
+        window.location.reload();
+        break;
+      case 'check_connection':
+        // Show connection status
+        toast({
+          title: navigator.onLine ? 'You are online' : 'You are offline',
+          description: navigator.onLine 
+            ? 'Connection is available. Please try again.' 
+            : 'Please check your internet connection.',
+          variant: navigator.onLine ? 'default' : 'destructive'
+        });
+        break;
+      case 'sign_in_required':
+        handleGoogleSignIn();
+        break;
+      case 'retry':
+        handleJoinGroup();
+        break;
     }
   };
 

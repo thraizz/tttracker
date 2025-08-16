@@ -7,8 +7,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useGroup } from '@/contexts/GroupContext';
 import { getGroupInvite, consumeGroupInvite, getGroup } from '@/services/groupService';
 import { GroupInvite, Group } from '@/types/tournament';
-import { Users, Calendar, Clock } from 'lucide-react';
+import { Users, Calendar, Clock, RefreshCw, AlertTriangle } from 'lucide-react';
 import { JoinGroupModal } from '@/components/JoinGroupModal';
+import { AuthenticationError } from '@/types/errors';
 
 export const JoinGroup: React.FC = () => {
   const { inviteId } = useParams<{ inviteId: string }>();
@@ -102,13 +103,100 @@ export const JoinGroup: React.FC = () => {
       navigate('/');
     } catch (error: unknown) {
       console.error('Error joining group:', error);
-      toast({ 
-        title: 'Error', 
-        description: error instanceof Error ? error.message : 'Failed to join group',
-        variant: 'destructive'
-      });
+      handleJoinError(error);
     } finally {
       setJoining(false);
+    }
+  };
+
+  const handleJoinError = (error: unknown) => {
+    if (error instanceof AuthenticationError) {
+      const retryAction = error.getRetryAction();
+      
+      toast({
+        title: getErrorTitle(error),
+        description: error.userMessage || error.message,
+        variant: 'destructive',
+        action: retryAction ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleRetryAction(retryAction)}
+          >
+            {getRetryActionLabel(retryAction)}
+          </Button>
+        ) : undefined
+      });
+    } else {
+      // Fallback for non-AuthenticationError
+      const errorMessage = error instanceof Error ? error.message : 'Failed to join group';
+      toast({ 
+        title: 'Error', 
+        description: errorMessage,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const getErrorTitle = (error: AuthenticationError): string => {
+    switch (error.code) {
+      case 'PWA_OFFLINE_AUTH_MISMATCH':
+        return 'Connection Required';
+      case 'PWA_STALE_TOKEN':
+      case 'PWA_REFRESH_FAILED':
+        return 'Session Expired';
+      case 'USER_NOT_AUTHENTICATED':
+        return 'Sign In Required';
+      case 'ALREADY_GROUP_MEMBER':
+        return 'Already a Member';
+      case 'GROUP_NOT_FOUND':
+        return 'Group Not Found';
+      case 'INVITE_EXPIRED':
+        return 'Invite Expired';
+      case 'INVITE_LIMIT_REACHED':
+        return 'Invite Limit Reached';
+      default:
+        return 'Join Failed';
+    }
+  };
+
+  const getRetryActionLabel = (action: string): string => {
+    switch (action) {
+      case 'refresh_and_signin':
+        return 'Refresh & Sign In';
+      case 'check_connection':
+        return 'Check Connection';
+      case 'sign_in_required':
+        return 'Sign In';
+      case 'retry':
+        return 'Try Again';
+      default:
+        return 'Retry';
+    }
+  };
+
+  const handleRetryAction = (action: string) => {
+    switch (action) {
+      case 'refresh_and_signin':
+        window.location.reload();
+        break;
+      case 'check_connection':
+        // Show connection status
+        toast({
+          title: navigator.onLine ? 'You are online' : 'You are offline',
+          description: navigator.onLine 
+            ? 'Connection is available. Please try again.' 
+            : 'Please check your internet connection.',
+          variant: navigator.onLine ? 'default' : 'destructive'
+        });
+        break;
+      case 'sign_in_required':
+        // Redirect to main app for sign in
+        navigate('/');
+        break;
+      case 'retry':
+        handleShowJoinModal();
+        break;
     }
   };
 

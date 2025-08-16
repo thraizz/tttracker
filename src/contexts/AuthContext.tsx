@@ -12,6 +12,7 @@ import {
 import { auth } from '../firebase';
 import { storageService } from '../services/storageService';
 import { userProfileService } from '../services/userProfileService';
+import { pwaAuthService } from '../services/pwaAuthService';
 
 interface AuthContextType {
   user: User | null;
@@ -42,9 +43,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      const previousUser = auth.currentUser;
       setUser(user);
       setLoading(false);
+
+      // Clear PWA cache when auth state changes significantly
+      if (pwaAuthService.isPWAEnvironment()) {
+        const authStateChanged = (
+          (!previousUser && user) || 
+          (previousUser && !user) || 
+          (previousUser?.isAnonymous !== user?.isAnonymous) ||
+          (previousUser?.uid !== user?.uid)
+        );
+
+        if (authStateChanged) {
+          try {
+            await pwaAuthService.clearPWAAuthCache();
+            console.log('PWA auth cache cleared due to auth state change');
+          } catch (error) {
+            console.error('Failed to clear PWA auth cache:', error);
+          }
+        }
+      }
 
       // Auto sign in anonymously if no user
       if (!user) {
@@ -87,24 +108,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       provider.addScope('profile');
       provider.addScope('email');
       
-      // Try to link the anonymous account with Google
+      // First get Google credential via popup
       const result = await signInWithPopup(auth, provider);
+      const googleCredential = GoogleAuthProvider.credentialFromResult(result);
+      
+      if (!googleCredential) {
+        throw new Error('Failed to get Google credential');
+      }
+
+      // Sign out the Google user to restore anonymous state
+      await firebaseSignOut(auth);
+      
+      // Wait for auth state to restore to anonymous
+      await new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (user?.isAnonymous) {
+            unsubscribe();
+            resolve(user);
+          }
+        });
+      });
+
+      // Now properly link the anonymous account with Google credential
+      const linkedUser = await linkWithCredential(auth.currentUser!, googleCredential);
       
       // Successful link - migrate data
       await storageService.migrateLocalDataToCloud();
-      await userProfileService.migrateAnonymousProfile(result.user.uid);
+      await userProfileService.migrateAnonymousProfile(linkedUser.user.uid);
       
       return { success: true };
     } catch (error: unknown) {
       console.error('Error upgrading to Google auth:', error);
       
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'auth/credential-already-in-use') {
-        // Google account already exists - user needs to choose merge or keep separate
-        return { 
-          success: false, 
-          requiresMerge: true,
-          existingUser: 'customData' in error ? (error as any).customData?.user : undefined
-        };
+      if (error && typeof error === 'object' && 'code' in error) {
+        if (error.code === 'auth/credential-already-in-use') {
+          // Google account already exists - user needs to choose merge or keep separate
+          return { 
+            success: false, 
+            requiresMerge: true,
+            existingUser: 'customData' in error ? (error as any).customData?.user : undefined
+          };
+        } else if (error.code === 'auth/email-already-in-use') {
+          // Similar case but different error code
+          return { 
+            success: false, 
+            requiresMerge: true,
+            existingUser: undefined
+          };
+        }
       }
       
       throw error;
@@ -113,6 +164,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = useCallback(async () => {
     try {
+      // Clear PWA cache before signing out
+      if (pwaAuthService.isPWAEnvironment()) {
+        await pwaAuthService.clearPWAAuthCache();
+      }
+      
       await firebaseSignOut(auth);
     } catch (error) {
       console.error('Error signing out:', error);

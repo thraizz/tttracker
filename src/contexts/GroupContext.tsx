@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Group } from '../types/tournament';
 import { useAuth } from './AuthContext';
 import { getUserGroups, subscribeToGroup, createGroup, joinGroup, getPublicGroups } from '../services/groupService';
+import { pwaAuthService } from '../services/pwaAuthService';
+import { AuthenticationError, AuthErrorCode } from '../types/errors';
 
 interface GroupContextType {
   currentGroup: Group | null;
@@ -97,11 +99,82 @@ export const GroupProvider: React.FC<GroupProviderProps> = ({ children }) => {
   }, [user, refreshGroups, refreshPublicGroups]);
 
   const joinGroupById = useCallback(async (groupId: string, playerName?: string): Promise<void> => {
-    if (!user) throw new Error('User must be authenticated');
+    if (!user) {
+      throw new AuthenticationError(
+        AuthErrorCode.USER_NOT_AUTHENTICATED,
+        'User must be authenticated to join groups',
+        {
+          userMessage: 'Please sign in to join groups.',
+          recoverable: true
+        }
+      );
+    }
 
-    await joinGroup(groupId, user.uid, playerName);
-    await refreshGroups();
-    await refreshPublicGroups();
+    // Validate auth state before group operation, especially in PWA environment
+    const authValidation = await pwaAuthService.validateBeforeGroupOperation();
+    if (!authValidation.isValid) {
+      const diagnostics = pwaAuthService.getAuthDiagnostics();
+      console.error('PWA auth validation failed:', { validation: authValidation, diagnostics });
+      
+      throw authValidation.error || new AuthenticationError(
+        AuthErrorCode.PWA_AUTH_VALIDATION_FAILED,
+        'Authentication validation failed',
+        {
+          userMessage: 'Authentication issue detected. Please try refreshing the app.',
+          recoverable: true,
+          details: diagnostics
+        }
+      );
+    }
+
+    try {
+      await joinGroup(groupId, user.uid, playerName);
+      await refreshGroups();
+      await refreshPublicGroups();
+    } catch (error) {
+      console.error('Group join error:', error);
+      
+      // Convert Firebase errors to our error format
+      if (error && typeof error === 'object' && 'code' in error) {
+        throw AuthenticationError.fromFirebaseError(error as { code: string; message: string });
+      }
+      
+      // Handle specific group-related errors
+      if (error instanceof Error) {
+        if (error.message.includes('already a member')) {
+          throw new AuthenticationError(
+            AuthErrorCode.ALREADY_GROUP_MEMBER,
+            'User is already a member of this group',
+            {
+              userMessage: 'You are already a member of this group.',
+              recoverable: false
+            }
+          );
+        }
+        
+        if (error.message.includes('Group not found')) {
+          throw new AuthenticationError(
+            AuthErrorCode.GROUP_NOT_FOUND,
+            'Group not found',
+            {
+              userMessage: 'This group could not be found. It may have been deleted.',
+              recoverable: false
+            }
+          );
+        }
+      }
+      
+      // Generic group join error
+      throw new AuthenticationError(
+        AuthErrorCode.GROUP_JOIN_FAILED,
+        'Failed to join group',
+        {
+          userMessage: 'Unable to join group. Please try again.',
+          recoverable: true,
+          cause: error instanceof Error ? error : new Error(String(error))
+        }
+      );
+    }
   }, [user, refreshGroups, refreshPublicGroups]);
 
   // Initialize groups when user changes
