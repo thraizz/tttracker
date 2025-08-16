@@ -15,7 +15,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
-import { Group, GroupInvite, Player } from '../types/tournament';
+import { Group, GroupInvite, Player, Tournament, MMRMatch } from '../types/tournament';
 import { userProfileService } from './userProfileService';
 import { storageService } from './storageService';
 
@@ -184,26 +184,69 @@ export const joinGroup = async (groupId: string, userId: string, playerName?: st
   }
   
   const groupData = groupSnap.data();
-  const existingPlayer = groupData.players?.find((player: Player) => player.id === userId);
+  const existingPlayerById = groupData.players?.find((player: Player) => player.id === userId);
   
   const updates: Record<string, unknown> = {
     members: arrayUnion(userId)
   };
   
-  // If player doesn't exist and we have a name, create player profile
-  if (!existingPlayer && playerName) {
-    const user = auth.currentUser;
-    const newPlayer = {
-      id: userId,
-      name: playerName,
-      wins: 0,
-      losses: 0,
-      mmr: 1000,
-      peakMmr: 1000,
-      isAnonymous: user?.isAnonymous || false
-    };
+  // If player doesn't exist by ID and we have a name, check for existing player by name
+  if (!existingPlayerById && playerName) {
+    const existingPlayerByName = groupData.players?.find((player: Player) => 
+      player.name.toLowerCase() === playerName.toLowerCase() && player.isAnonymous
+    );
     
-    updates.players = arrayUnion(newPlayer);
+    const user = auth.currentUser;
+    
+    if (existingPlayerByName) {
+      // Link existing anonymous player to the new account
+      const updatedPlayer = { ...existingPlayerByName, id: userId, isAnonymous: false };
+      const updatedPlayers = groupData.players?.map((player: Player) => 
+        player.id === existingPlayerByName.id 
+          ? updatedPlayer
+          : player
+      ) || [];
+      
+      // Update player references in tournaments
+      const updatedTournaments = groupData.tournaments?.map((tournament: Tournament) => ({
+        ...tournament,
+        players: tournament.players.map(player => 
+          player.id === existingPlayerByName.id ? updatedPlayer : player
+        ),
+        matches: tournament.matches.map(match => ({
+          ...match,
+          player1: match.player1?.id === existingPlayerByName.id ? updatedPlayer : match.player1,
+          player2: match.player2?.id === existingPlayerByName.id ? updatedPlayer : match.player2,
+          winner: match.winner?.id === existingPlayerByName.id ? updatedPlayer : match.winner
+        })),
+        winner: tournament.winner?.id === existingPlayerByName.id ? updatedPlayer : tournament.winner
+      })) || [];
+      
+      // Update player references in MMR matches
+      const updatedMmrMatches = groupData.mmrMatches?.map((match: MMRMatch) => ({
+        ...match,
+        player1: match.player1.id === existingPlayerByName.id ? updatedPlayer : match.player1,
+        player2: match.player2.id === existingPlayerByName.id ? updatedPlayer : match.player2,
+        winner: match.winner.id === existingPlayerByName.id ? updatedPlayer : match.winner
+      })) || [];
+      
+      updates.players = updatedPlayers;
+      updates.tournaments = updatedTournaments;
+      updates.mmrMatches = updatedMmrMatches;
+    } else {
+      // Create new player profile
+      const newPlayer = {
+        id: userId,
+        name: playerName,
+        wins: 0,
+        losses: 0,
+        mmr: 1000,
+        peakMmr: 1000,
+        isAnonymous: user?.isAnonymous || false
+      };
+      
+      updates.players = arrayUnion(newPlayer);
+    }
     
     // Record name usage for smart suggestions
     await userProfileService.recordNameUsage(playerName, groupData.name);
