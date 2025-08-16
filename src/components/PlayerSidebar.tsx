@@ -26,9 +26,8 @@ export const PlayerSidebar = ({
   // Determine current tab based on route
   const activeTab = location.pathname === '/mmr' ? 'mmr' : 'tournament';
 
-  const topPlayers = [...players]
-    .sort((a, b) => b.mmr - a.mmr)
-    .slice(0, 5);
+  const sortedPlayers = [...players]
+    .sort((a, b) => b.mmr - a.mmr);
 
   return (
     <div className="flex flex-col h-full">
@@ -75,8 +74,8 @@ export const PlayerSidebar = ({
         ) : (
           <div className="space-y-2">
             {activeTab === 'mmr' ? (
-              // MMR Mode: Show top players with rankings
-              topPlayers.map((player, index) => {
+              // MMR Mode: Show all players sorted by MMR with rankings
+              sortedPlayers.map((player, index) => {
                 const rank = getRankByMmr(player.mmr);
                 return (
                   <Card key={player.id} className="p-3">
@@ -112,18 +111,6 @@ export const PlayerSidebar = ({
                   </div>
                 </Card>
               ))
-            )}
-
-            {players.length > 5 && activeTab === 'mmr' && (
-              <div className="text-center pt-2">
-                <Dialog open={playerManagementOpen} onOpenChange={setPlayerManagementOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-xs">
-                      View All ({players.length}) Players
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
-              </div>
             )}
           </div>
         )}
