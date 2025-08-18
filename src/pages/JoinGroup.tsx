@@ -17,7 +17,7 @@ export const JoinGroup: React.FC = () => {
   const { joinGroupById, setCurrentGroup } = useGroup();
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const [invite, setInvite] = useState<GroupInvite | null>(null);
   const [group, setGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,13 +92,13 @@ export const JoinGroup: React.FC = () => {
 
       // Use the invite (increment usage count)
       await consumeGroupInvite(invite.id);
-      
+
       // Join the group
       await joinGroupById(group.id, playerName);
-      
+
       // Set as current group
       setCurrentGroup(group);
-      
+
       toast({ title: 'Success', description: `Successfully joined ${group.name}!` });
       navigate('/');
     } catch (error: unknown) {
@@ -112,7 +112,7 @@ export const JoinGroup: React.FC = () => {
   const handleJoinError = (error: unknown) => {
     if (error instanceof AuthenticationError) {
       const retryAction = error.getRetryAction();
-      
+
       toast({
         title: getErrorTitle(error),
         description: error.userMessage || error.message,
@@ -130,8 +130,8 @@ export const JoinGroup: React.FC = () => {
     } else {
       // Fallback for non-AuthenticationError
       const errorMessage = error instanceof Error ? error.message : 'Failed to join group';
-      toast({ 
-        title: 'Error', 
+      toast({
+        title: 'Error',
         description: errorMessage,
         variant: 'destructive'
       });
@@ -184,8 +184,8 @@ export const JoinGroup: React.FC = () => {
         // Show connection status
         toast({
           title: navigator.onLine ? 'You are online' : 'You are offline',
-          description: navigator.onLine 
-            ? 'Connection is available. Please try again.' 
+          description: navigator.onLine
+            ? 'Connection is available. Please try again.'
             : 'Please check your internet connection.',
           variant: navigator.onLine ? 'default' : 'destructive'
         });
@@ -284,9 +284,9 @@ export const JoinGroup: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span>{group.members.length} members</span>
+              <span>{group.players.length} players</span>
             </div>
-            
+
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span>Created {group.createdAt.toLocaleDateString()}</span>
@@ -314,7 +314,7 @@ export const JoinGroup: React.FC = () => {
             >
               Join Group
             </Button>
-            
+
             <Button
               onClick={() => navigate('/')}
               variant="outline"

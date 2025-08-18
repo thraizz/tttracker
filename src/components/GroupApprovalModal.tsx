@@ -37,14 +37,14 @@ export const GroupApprovalModal: React.FC<GroupApprovalModalProps> = ({
     }
 
     setSending(true);
-    
+
     // Simulate sending approval request
     // In a real implementation, this would send a request to the group owner
     setTimeout(() => {
       setSending(false);
       onRequestSent();
-      toast({ 
-        title: 'Request Sent', 
+      toast({
+        title: 'Request Sent',
         description: `Your request to join "${group.name}" has been sent to the group owner.`
       });
       onClose();
@@ -62,7 +62,7 @@ export const GroupApprovalModal: React.FC<GroupApprovalModalProps> = ({
             Approval Required
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div className="text-center space-y-2">
             <h3 className="text-lg font-semibold">{group.name}</h3>
@@ -74,9 +74,9 @@ export const GroupApprovalModal: React.FC<GroupApprovalModalProps> = ({
           <div className="space-y-3 border rounded-lg p-3 bg-muted/50">
             <div className="flex items-center gap-2 text-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span>{group.members.length} members</span>
+              <span>{group.players.length} players</span>
             </div>
-            
+
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span>Created {group.createdAt.toLocaleDateString()}</span>
@@ -85,10 +85,10 @@ export const GroupApprovalModal: React.FC<GroupApprovalModalProps> = ({
 
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              This group requires approval from the group owner before you can join. 
+              This group requires approval from the group owner before you can join.
               Please enter your name and you can include a message with your request:
             </p>
-            
+
             <div>
               <Label htmlFor="player-name">Your Name</Label>
               <Input
@@ -99,7 +99,7 @@ export const GroupApprovalModal: React.FC<GroupApprovalModalProps> = ({
                 disabled={sending}
               />
             </div>
-            
+
             <div>
               <Label htmlFor="approval-message">Message (Optional)</Label>
               <Textarea

@@ -14,19 +14,28 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, User } from "lucide-react";
+import { Plus, Trash2, User, Link } from "lucide-react";
 import { Player } from "@/types/tournament";
 import { getRankByMmrWithContrast, formatRankDisplay } from "@/utils/rankSystem";
 import { useTheme } from "@/hooks/useTheme";
+import type { User as FirebaseUser } from "firebase/auth";
 
 interface PlayerManagementProps {
   players: Player[];
   onUpdatePlayers: (players: Player[]) => void;
+  currentUser?: FirebaseUser | null;
+  userIsLinked?: boolean;
+  onLinkPlayer?: (playerId: string) => void;
 }
 
-const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) => {
+const PlayerManagement = ({ players, onUpdatePlayers, currentUser, userIsLinked, onLinkPlayer }: PlayerManagementProps) => {
   const [newPlayerName, setNewPlayerName] = useState("");
   const isDark = useTheme();
+
+  // Check if a player ID is numerical (not linked to a Google account)
+  const isPlayerUnlinked = (playerId: string) => {
+    return /^\d+$/.test(playerId);
+  };
 
   const addPlayer = () => {
     if (!newPlayerName.trim()) return;
@@ -60,6 +69,21 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
 
   return (
     <div className="space-y-4 m-4">
+      {/* User Not Linked Notification */}
+      {currentUser && !userIsLinked && players.some(p => isPlayerUnlinked(p.id)) && (
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <div className="flex items-center gap-3">
+            <Link className="w-5 h-5 text-blue-600" />
+            <div>
+              <h4 className="font-medium text-blue-900">Link Your Account</h4>
+              <p className="text-sm text-blue-700">
+                Link an existing player to your account to prefill match forms and track your stats. Click "Link" next to any unlinked player.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Add Player Form */}
       <div className="flex gap-2">
         <Input
@@ -120,34 +144,49 @@ const PlayerManagement = ({ players, onUpdatePlayers }: PlayerManagementProps) =
                   </div>
                 </div>
 
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
+                <div className="flex gap-2">
+                  {/* Link Button - Only show if user is logged in and this player is unlinked (numerical ID) and this user has no player assigned to them*/}
+                  {currentUser && isPlayerUnlinked(player.id) && onLinkPlayer && !userIsLinked && (
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => onLinkPlayer(player.id)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Link className="w-4 h-4 mr-1" />
+                      Link
                     </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Player</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete "{player.name}"? This action cannot be undone and will remove all associated data including match history and statistics.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => removePlayer(player.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  )}
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Player</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{player.name}"? This action cannot be undone and will remove all associated data including match history and statistics.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => removePlayer(player.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </Card>
             );
           })}

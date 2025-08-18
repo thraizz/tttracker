@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Cloud, Shield, Smartphone, ArrowRight, AlertTriangle } from 'lucide-react';
+import { AuthCredential } from 'firebase/auth';
 
 interface GoogleUpgradeModalProps {
   isOpen: boolean;
@@ -17,11 +18,12 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
   onClose,
   onSuccess
 }) => {
-  const { upgradeToGoogle, isAnonymous } = useAuth();
+  const { upgradeToGoogle, signInWithExistingGoogle, signInWithGoogle, isAnonymous } = useAuth();
   const { toast } = useToast();
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [showMergeOptions, setShowMergeOptions] = useState(false);
   const [existingUserInfo, setExistingUserInfo] = useState<{ email?: string } | null>(null);
+  const [pendingCredential, setPendingCredential] = useState<AuthCredential | null>(null);
 
   const handleUpgrade = async () => {
     if (!isAnonymous) {
@@ -36,7 +38,7 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
     setIsUpgrading(true);
     try {
       const result = await upgradeToGoogle();
-      
+
       if (result.success) {
         toast({
           title: 'Success!',
@@ -46,13 +48,29 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
         onClose();
       } else if (result.requiresMerge) {
         setExistingUserInfo(result.existingUser);
+        setPendingCredential(result.credential);
         setShowMergeOptions(true);
       }
     } catch (error) {
       console.error('Upgrade error:', error);
+
+      // Handle specific error cases
+      let errorMessage = 'Failed to upgrade to Google account. Please try again.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('Google sign-in was cancelled')) {
+          errorMessage = 'Google sign-in was cancelled.';
+        } else if (error.message.includes('popup was blocked')) {
+          errorMessage = 'Google sign-in popup was blocked. Please allow popups for this site and try again.';
+        } else if (error.message.includes('credential-already-in-use')) {
+          // This should be handled by the requiresMerge flow, but just in case
+          errorMessage = 'This Google account is already in use. Please choose how to proceed.';
+        }
+      }
+
       toast({
         title: 'Upgrade Failed',
-        description: 'Failed to upgrade to Google account. Please try again.',
+        description: errorMessage,
         variant: 'destructive'
       });
     } finally {
@@ -69,14 +87,45 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
   };
 
   const handleExistingAccountChoice = async (choice: 'merge' | 'separate') => {
-    if (choice === 'merge') {
-      // For now, we'll keep it simple and just switch to the existing account
-      toast({
-        title: 'Switching to Existing Account',
-        description: 'You are now signed in with your existing Google account.'
-      });
-      onSuccess?.();
-      onClose();
+    if (choice === 'merge' && pendingCredential) {
+      try {
+        // Sign in with the existing Google account using the credential
+        await signInWithExistingGoogle(pendingCredential);
+
+        toast({
+          title: 'Account Switched',
+          description: 'You are now signed in with your existing Google account.'
+        });
+        onSuccess?.();
+        onClose();
+      } catch (error) {
+        console.error('Error switching to existing account:', error);
+        toast({
+          title: 'Switch Failed',
+          description: 'Failed to switch to existing account. Please try signing in with Google from the main menu.',
+          variant: 'destructive'
+        });
+      }
+    } else if (choice === 'merge') {
+      // No credential available, offer to sign in with Google directly
+      try {
+        // Use the regular Google sign-in function
+        await signInWithGoogle();
+
+        toast({
+          title: 'Account Switched',
+          description: 'You are now signed in with your existing Google account.'
+        });
+        onSuccess?.();
+        onClose();
+      } catch (error) {
+        console.error('Error signing in with Google:', error);
+        toast({
+          title: 'Sign-in Failed',
+          description: 'Failed to sign in with Google. Please try again or use the main sign-in option.',
+          variant: 'destructive'
+        });
+      }
     } else {
       // Keep using anonymous account
       handleKeepAnonymous();
@@ -111,14 +160,15 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
               Account Already Exists
             </DialogTitle>
             <DialogDescription>
-              A Google account with this email already exists. What would you like to do?
+              A Google account with this email already exists in our system. You have two options:
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <Alert>
               <AlertDescription>
-                {existingUserInfo?.email && `Account: ${existingUserInfo.email}`}
+                {existingUserInfo?.email && `Existing Account: ${existingUserInfo.email}`}
+                {!existingUserInfo?.email && 'A Google account with this email already exists in our system.'}
               </AlertDescription>
             </Alert>
 
@@ -131,7 +181,10 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
                 <ArrowRight className="h-4 w-4 mr-2" />
                 Switch to Existing Google Account
               </Button>
-              
+              <p className="text-xs text-muted-foreground ml-6">
+                You'll be signed in with your existing Google account. This will switch you to that account immediately.
+              </p>
+
               <Button
                 onClick={() => handleExistingAccountChoice('separate')}
                 className="w-full justify-start"
@@ -139,7 +192,18 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
               >
                 Continue as Anonymous User
               </Button>
+              <p className="text-xs text-muted-foreground ml-6">
+                Keep using your current anonymous account. You can upgrade later from Settings.
+              </p>
             </div>
+
+            <Alert>
+              <AlertDescription className="text-xs">
+                <strong>Note:</strong> When you switch to your existing Google account, you'll be immediately signed in
+                with that account and have access to any data associated with it. Your current anonymous data will
+                remain separate and can be accessed if you sign back in anonymously later.
+              </AlertDescription>
+            </Alert>
           </div>
         </DialogContent>
       </Dialog>
@@ -155,7 +219,7 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
             Get the most out of TTTracker with cross-device sync and data backup
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Benefits */}
           <div className="space-y-4">
@@ -176,7 +240,7 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
           <Alert>
             <Shield className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              <strong>Privacy First:</strong> We only store your table tennis data and Google profile info. 
+              <strong>Privacy First:</strong> We only store your table tennis data and Google profile info.
               You can delete your account anytime or continue using anonymously.
             </AlertDescription>
           </Alert>
@@ -190,7 +254,7 @@ export const GoogleUpgradeModal: React.FC<GoogleUpgradeModalProps> = ({
             >
               {isUpgrading ? 'Changing...' : 'Change to Google'}
             </Button>
-            
+
             <Button
               onClick={handleKeepAnonymous}
               variant="outline"

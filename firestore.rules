@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidTimestamp(t) {
+      return t is timestamp;
+    }
+    
+    // User data - only accessible by the document owner
+    match /userData/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // Groups - accessible by members, with public group access
+    match /groups/{groupId} {
+      // Members can read group data, OR authenticated users can read public groups
+      allow read: if isAuthenticated() && 
+        (request.auth.uid in resource.data.members || 
+         resource.data.isPublic == true ||
+         resource.data.settings.allowPublicJoin == true);
+      
+      // Only authenticated users can create groups
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.data.createdBy &&
+        request.data.keys().hasAll(['name', 'createdBy', 'createdAt', 'members']) &&
+        request.data.members.size() >= 1 &&
+        request.auth.uid in request.data.members;
+      
+      // Members can update group data with restrictions
+      allow update: if isAuthenticated() && 
+        request.auth.uid in resource.data.members &&
+        // Prevent unauthorized changes to core group settings
+        request.data.createdBy == resource.data.createdBy &&
+        request.data.createdAt == resource.data.createdAt &&
+        // Members must remain in the group (can't remove themselves via update)
+        request.auth.uid in request.data.members;
+      
+      // Only group creator can delete the group
+      allow delete: if isAuthenticated() && 
+        request.auth.uid == resource.data.createdBy;
+    }
+    
+    // Group invites - public read for invite consumption, restricted write
+    match /groupInvites/{inviteId} {
+      // Anyone can read invites (needed for invite links and QR codes)
+      allow read: if true;
+      
+      // Only authenticated users can create invites 
+      allow create: if isAuthenticated() && 
+        request.data.keys().hasAll(['groupId', 'groupName', 'createdBy', 'createdAt']) &&
+        request.auth.uid == request.data.createdBy;
+      
+      // Only invite creator can update invites
+      allow update: if isAuthenticated() && 
+        request.auth.uid == resource.data.createdBy &&
+        // Prevent changes to core invite properties
+        request.data.groupId == resource.data.groupId &&
+        request.data.createdBy == resource.data.createdBy &&
+        request.data.createdAt == resource.data.createdAt;
+      
+      // Only invite creator can delete invites
+      allow delete: if isAuthenticated() && 
+        request.auth.uid == resource.data.createdBy;
+    }
+    
+    // Deny all other document access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

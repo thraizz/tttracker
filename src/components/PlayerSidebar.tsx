@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Users, Trophy, Settings2 } from "lucide-react";
+import { Plus, Users, Trophy, Settings2, Link } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
 import PlayerManagement from "@/components/PlayerManagement";
 import { getRankByMmr } from "@/utils/rankSystem";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PlayerSidebarProps {
   players: Player[];
@@ -21,6 +22,7 @@ export const PlayerSidebar = ({
   onAddMatch
 }: PlayerSidebarProps) => {
   const location = useLocation();
+  const { user } = useAuth();
   const [playerManagementOpen, setPlayerManagementOpen] = useState(false);
 
   // Determine current tab based on route
@@ -28,6 +30,24 @@ export const PlayerSidebar = ({
 
   const sortedPlayers = [...players]
     .sort((a, b) => b.mmr - a.mmr);
+
+  // Check if current user is linked to a player
+  const currentUserPlayer = user ? players.find(p => p.id === user.uid) : null;
+  const userIsLinked = !!currentUserPlayer;
+
+  const linkPlayerToAccount = (playerId: string) => {
+    if (!user) return;
+
+    // Update the player's ID to match the user's UID
+    const updatedPlayers = players.map(player => {
+      if (player.id === playerId) {
+        return { ...player, id: user.uid };
+      }
+      return player;
+    });
+
+    onUpdatePlayers(updatedPlayers);
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -52,6 +72,9 @@ export const PlayerSidebar = ({
               <PlayerManagement
                 players={players}
                 onUpdatePlayers={onUpdatePlayers}
+                currentUser={user}
+                userIsLinked={userIsLinked}
+                onLinkPlayer={linkPlayerToAccount}
               />
             </DialogContent>
           </Dialog>
@@ -69,6 +92,15 @@ export const PlayerSidebar = ({
                   Add Players
                 </Button>
               </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <PlayerManagement
+                  players={players}
+                  onUpdatePlayers={onUpdatePlayers}
+                  currentUser={user}
+                  userIsLinked={userIsLinked}
+                  onLinkPlayer={linkPlayerToAccount}
+                />
+              </DialogContent>
             </Dialog>
           </Card>
         ) : (

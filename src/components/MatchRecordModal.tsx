@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +6,7 @@ import { Target } from "lucide-react";
 import { Player, MMRMatch } from "@/types/tournament";
 import { useGroup } from "@/contexts/GroupContext";
 import { useModal } from "@/contexts/ModalContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { updateGroup } from "@/services/groupService";
 import { calculateEloChange } from "@/utils/eloUtils";
 import { PlayerSelectionField } from "./MatchRecordModal/PlayerSelectionField";
@@ -25,6 +26,7 @@ export const MatchRecordModal = ({
   trigger
 }: MatchRecordModalProps) => {
   const { currentGroup } = useGroup();
+  const { user } = useAuth();
   const { toast } = useToast();
   const { matchRecordModalOpen, setMatchRecordModalOpen } = useModal();
   const [selectedPlayer1, setSelectedPlayer1] = useState<string>("");
@@ -67,7 +69,9 @@ export const MatchRecordModal = ({
 
 
   const resetForm = () => {
-    setSelectedPlayer1("");
+    // Prefill player 1 with current user if available
+    const currentUserPlayer = players.find(p => p.id === user?.uid);
+    setSelectedPlayer1(currentUserPlayer?.id || "");
     setSelectedPlayer2("");
     setScorePlayer1("0");
     setScorePlayer2("0");
@@ -185,6 +189,20 @@ export const MatchRecordModal = ({
       Record Match
     </Button>
   );
+
+  // Initialize form with current user when modal opens
+  useEffect(() => {
+    if (matchRecordModalOpen && user) {
+      console.log("matchRecordModalOpen", matchRecordModalOpen);
+      console.log("user", user);
+      console.log("players", players);
+      console.log("selectedPlayer1", selectedPlayer1);
+      const currentUserPlayer = players.find(p => p.id === user.uid);
+      if (currentUserPlayer && selectedPlayer1 === "") {
+        setSelectedPlayer1(currentUserPlayer.id);
+      }
+    }
+  }, [matchRecordModalOpen, user, players, selectedPlayer1]);
 
   if (players.length < 2) {
     return null;

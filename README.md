@@ -1,6 +1,8 @@
-# 🏓 TTTracker - Table Tennis Tournament Manager
+# 🏓 TTTracker - Table Tennis MMR and Tournament Tracker
 
 A modern, intuitive table tennis tournament management app that helps you organize tournaments, track matches, and crown champions in your friend group! Features both tournament brackets and continuous MMR/Elo rating system for competitive play.
+
+Could be used for basically anything that involves a group of people playing something, but it's currently designed for table tennis :)
 
 ## ✨ Features
 

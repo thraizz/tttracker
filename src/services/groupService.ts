@@ -276,6 +276,36 @@ export const deleteGroup = async (groupId: string): Promise<void> => {
   await deleteDoc(doc(db, GROUPS_COLLECTION, groupId));
 };
 
+export const getOrCreateGroupInvite = async (
+  groupId: string, 
+  groupName: string,
+  userId: string,
+  options?: {
+    expiresAt?: Date;
+    usageLimit?: number;
+  }
+): Promise<string> => {
+  // First, try to find an existing valid invite for this group and user
+  const existingInvite = await findValidGroupInvite(groupId, userId, options);
+  if (existingInvite) {
+    return existingInvite.id;
+  }
+
+  // Create a new invite if no valid one exists
+  const inviteData = {
+    groupId,
+    groupName,
+    createdBy: userId,
+    createdAt: serverTimestamp(),
+    usedCount: 0,
+    ...(options?.expiresAt && { expiresAt: Timestamp.fromDate(options.expiresAt) }),
+    ...(options?.usageLimit && { usageLimit: options.usageLimit })
+  };
+  
+  const docRef = await addDoc(collection(db, GROUP_INVITES_COLLECTION), inviteData);
+  return docRef.id;
+};
+
 export const createGroupInvite = async (
   groupId: string, 
   groupName: string,
@@ -297,6 +327,52 @@ export const createGroupInvite = async (
   
   const docRef = await addDoc(collection(db, GROUP_INVITES_COLLECTION), inviteData);
   return docRef.id;
+};
+
+const findValidGroupInvite = async (
+  groupId: string,
+  userId: string,
+  options?: {
+    expiresAt?: Date;
+    usageLimit?: number;
+  }
+): Promise<GroupInvite | null> => {
+  // Query for invites created by this user for this group
+  const q = query(
+    collection(db, GROUP_INVITES_COLLECTION),
+    where('groupId', '==', groupId),
+    where('createdBy', '==', userId)
+  );
+  
+  const querySnapshot = await getDocs(q);
+  const now = new Date();
+  
+  // Find a valid invite that matches our criteria
+  for (const doc of querySnapshot.docs) {
+    const data = doc.data();
+    const invite: GroupInvite = {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate() || new Date(),
+      ...(data.expiresAt && { expiresAt: data.expiresAt.toDate() })
+    } as GroupInvite;
+    
+    // Check if invite is still valid
+    const isNotExpired = !invite.expiresAt || invite.expiresAt > now;
+    const hasUsageRemaining = !invite.usageLimit || invite.usedCount < invite.usageLimit;
+    
+    // Check if the invite matches the desired options
+    const hasMatchingExpiry = (!options?.expiresAt && !invite.expiresAt) || 
+                             (options?.expiresAt && invite.expiresAt && 
+                              Math.abs(options.expiresAt.getTime() - invite.expiresAt.getTime()) < 60000); // Within 1 minute
+    const hasMatchingUsageLimit = options?.usageLimit === invite.usageLimit;
+    
+    if (isNotExpired && hasUsageRemaining && hasMatchingExpiry && hasMatchingUsageLimit) {
+      return invite;
+    }
+  }
+  
+  return null;
 };
 
 export const getGroupInvite = async (inviteId: string): Promise<GroupInvite | null> => {

@@ -7,7 +7,9 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   linkWithCredential,
-  AuthCredential
+  linkWithPopup,
+  AuthCredential,
+  signInWithCredential
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import { storageService } from '../services/storageService';
@@ -20,8 +22,9 @@ interface AuthContextType {
   isAnonymous: boolean;
   signInAnonymous: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  upgradeToGoogle: () => Promise<{ success: boolean; requiresMerge?: boolean; existingUser?: User }>;
+  upgradeToGoogle: () => Promise<{ success: boolean; requiresMerge?: boolean; existingUser?: User; credential?: AuthCredential }>;
   signOut: () => Promise<void>;
+  signInWithExistingGoogle: (credential: AuthCredential) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,8 +54,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clear PWA cache when auth state changes significantly
       if (pwaAuthService.isPWAEnvironment()) {
         const authStateChanged = (
-          (!previousUser && user) || 
-          (previousUser && !user) || 
+          (!previousUser && user) ||
+          (previousUser && !user) ||
           (previousUser?.isAnonymous !== user?.isAnonymous) ||
           (previousUser?.uid !== user?.uid)
         );
@@ -97,7 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const upgradeToGoogle = useCallback(async (): Promise<{ success: boolean; requiresMerge?: boolean; existingUser?: User }> => {
+  const upgradeToGoogle = useCallback(async (): Promise<{ success: boolean; requiresMerge?: boolean; existingUser?: User; credential?: AuthCredential }> => {
     const anonymousUser = auth.currentUser;
     if (!anonymousUser || !anonymousUser.isAnonymous) {
       throw new Error('User is not anonymous');
@@ -107,57 +110,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const provider = new GoogleAuthProvider();
       provider.addScope('profile');
       provider.addScope('email');
-      
-      // First get Google credential via popup
-      const result = await signInWithPopup(auth, provider);
-      const googleCredential = GoogleAuthProvider.credentialFromResult(result);
-      
-      if (!googleCredential) {
-        throw new Error('Failed to get Google credential');
-      }
 
-      // Sign out the Google user to restore anonymous state
-      await firebaseSignOut(auth);
-      
-      // Wait for auth state to restore to anonymous
-      await new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          if (user?.isAnonymous) {
-            unsubscribe();
-            resolve(user);
+      // Link anonymous user with Google credential directly
+      try {
+        const linkedUser = await linkWithPopup(auth.currentUser!, provider);
+
+        // Successful link - migrate data
+        await storageService.migrateLocalDataToCloud();
+        await userProfileService.migrateAnonymousProfile(linkedUser.user.uid);
+
+        return { success: true };
+      } catch (popupError: unknown) {
+        // Check if this is a credential conflict error
+        if (popupError && typeof popupError === 'object' && 'code' in popupError) {
+          if (popupError.code === 'auth/credential-already-in-use') {
+            // Google account already exists - user needs to choose merge or keep separate
+            // Extract the existing user info from the error
+            const existingUser = (popupError as { customData?: { user?: User } }).customData?.user;
+
+            return {
+              success: false,
+              requiresMerge: true,
+              existingUser,
+              credential: undefined
+            };
+          } else if (popupError.code === 'auth/email-already-in-use') {
+            // Similar case but different error code
+            return {
+              success: false,
+              requiresMerge: true,
+              existingUser: undefined,
+              credential: undefined
+            };
+          } else if (popupError.code === 'auth/popup-closed-by-user') {
+            // User closed the popup
+            throw new Error('Google sign-in was cancelled');
+          } else if (popupError.code === 'auth/popup-blocked') {
+            // Popup was blocked
+            throw new Error('Google sign-in popup was blocked. Please allow popups for this site.');
           }
-        });
-      });
+        }
 
-      // Now properly link the anonymous account with Google credential
-      const linkedUser = await linkWithCredential(auth.currentUser!, googleCredential);
-      
-      // Successful link - migrate data
-      await storageService.migrateLocalDataToCloud();
-      await userProfileService.migrateAnonymousProfile(linkedUser.user.uid);
-      
-      return { success: true };
+        // Re-throw the error if it's not a credential conflict
+        throw popupError;
+      }
     } catch (error: unknown) {
       console.error('Error upgrading to Google auth:', error);
-      
-      if (error && typeof error === 'object' && 'code' in error) {
-        if (error.code === 'auth/credential-already-in-use') {
-          // Google account already exists - user needs to choose merge or keep separate
-          return { 
-            success: false, 
-            requiresMerge: true,
-            existingUser: 'customData' in error ? (error as any).customData?.user : undefined
-          };
-        } else if (error.code === 'auth/email-already-in-use') {
-          // Similar case but different error code
-          return { 
-            success: false, 
-            requiresMerge: true,
-            existingUser: undefined
-          };
-        }
-      }
-      
+      throw error;
+    }
+  }, []);
+
+  const signInWithExistingGoogle = useCallback(async (credential: AuthCredential): Promise<void> => {
+    try {
+      // Sign in with the existing Google account using the credential
+      await signInWithCredential(auth, credential);
+    } catch (error) {
+      console.error('Error signing in with existing Google account:', error);
       throw error;
     }
   }, []);
@@ -168,7 +176,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (pwaAuthService.isPWAEnvironment()) {
         await pwaAuthService.clearPWAAuthCache();
       }
-      
+
       await firebaseSignOut(auth);
     } catch (error) {
       console.error('Error signing out:', error);
@@ -183,8 +191,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signInAnonymous,
     signInWithGoogle,
     upgradeToGoogle,
-    signOut
-  }), [user, loading, signInAnonymous, signInWithGoogle, upgradeToGoogle, signOut]);
+    signOut,
+    signInWithExistingGoogle
+  }), [user, loading, signInAnonymous, signInWithGoogle, upgradeToGoogle, signOut, signInWithExistingGoogle]);
 
   return (
     <AuthContext.Provider value={value}>
