@@ -23,7 +23,7 @@ export const PlayerSelectionField = ({
   excludePlayerId
 }: PlayerSelectionFieldProps) => {
   const availablePlayers = excludePlayerId ? players.filter(p => p.id !== excludePlayerId) : players;
-  
+
   return (
     <div className="space-y-4">
       <div>
@@ -52,7 +52,8 @@ export const PlayerSelectionField = ({
         <label className="text-sm font-medium mb-2 block">{label} Score</label>
         <Input
           type="number"
-          value={scoreValue || "0"}
+          placeholder="0"
+          value={scoreValue}
           onChange={(e) => onScoreChange(e.target.value)}
           className="text-center text-lg font-semibold"
         />
