@@ -23,5 +23,22 @@ dist-ssr
 *.sln
 *.sw?
 
-# Firebase service account key
+# Environment files
+.env*
+*.env
+
+# Firebase private keys and service accounts
 serviceAccountKey.json
+**/serviceAccount*.json
+**/firebase-adminsdk*.json
+.firebase/
+
+# Security sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+
+# IDE sensitive files
+.vscode/settings.json
+.idea/workspace.xml

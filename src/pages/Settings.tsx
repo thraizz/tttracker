@@ -26,7 +26,7 @@ export const Settings: React.FC = () => {
   const { user, isAnonymous, signInWithGoogle, signOut } = useAuth();
   const { currentGroup, createNewGroup } = useGroup();
   const { toast } = useToast();
-  
+
   const [importData, setImportData] = useState('');
   const [importing, setImporting] = useState(false);
   const [groupNameForImport, setGroupNameForImport] = useState('Imported Data Group');
@@ -42,15 +42,15 @@ export const Settings: React.FC = () => {
       setSigningIn(true);
       try {
         await signInWithGoogle();
-        toast({ 
-          title: 'Success', 
-          description: 'Successfully signed in with Google!' 
+        toast({
+          title: 'Success',
+          description: 'Successfully signed in with Google!'
         });
       } catch (error) {
-        toast({ 
-          title: 'Error', 
+        toast({
+          title: 'Error',
           description: 'Failed to sign in with Google. Please try again.',
-          variant: 'destructive' 
+          variant: 'destructive'
         });
       } finally {
         setSigningIn(false);
@@ -60,24 +60,24 @@ export const Settings: React.FC = () => {
 
   const handleUpgradeSuccess = () => {
     setShowUpgradeModal(false);
-    toast({ 
-      title: 'Success', 
-      description: 'Successfully upgraded to Google account! Your data is now synced across devices.' 
+    toast({
+      title: 'Success',
+      description: 'Successfully upgraded to Google account! Your data is now synced across devices.'
     });
   };
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast({ 
-        title: 'Success', 
-        description: 'Successfully signed out!' 
+      toast({
+        title: 'Success',
+        description: 'Successfully signed out!'
       });
     } catch (error) {
-      toast({ 
-        title: 'Error', 
+      toast({
+        title: 'Error',
         description: 'Failed to sign out. Please try again.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   };
@@ -100,7 +100,7 @@ export const Settings: React.FC = () => {
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `tttracker-${currentGroup.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
@@ -114,7 +114,7 @@ export const Settings: React.FC = () => {
 
   const exportLegacyData = () => {
     const legacyData: LegacyData = {};
-    
+
     // Try to get data from localStorage
     try {
       const players = localStorage.getItem('players');
@@ -143,7 +143,7 @@ export const Settings: React.FC = () => {
       const dataStr = JSON.stringify(exportData, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(dataBlob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = `tttracker-legacy-data-${new Date().toISOString().split('T')[0]}.json`;
@@ -173,10 +173,10 @@ export const Settings: React.FC = () => {
     setImporting(true);
     try {
       const parsedData = JSON.parse(importData);
-      
+
       // Determine if this is legacy data or group export data
       const isLegacyData = parsedData.dataType === 'legacy' || !parsedData.groupName;
-      
+
       let players: Player[] = [];
       let tournaments: Tournament[] = [];
       let mmrMatches: MMRMatch[] = [];
@@ -190,11 +190,11 @@ export const Settings: React.FC = () => {
             peakMmr: player.peakMmr || player.mmr || 1000
           }));
         }
-        
+
         if (parsedData.currentTournament) {
           tournaments = [parsedData.currentTournament];
         }
-        
+
         if (parsedData.mmrMatches) {
           mmrMatches = parsedData.mmrMatches;
         }
@@ -207,7 +207,7 @@ export const Settings: React.FC = () => {
 
       // Create new group with imported data
       const groupId = await createNewGroup(groupNameForImport.trim(), 'Imported from backup data');
-      
+
       // Update the group with imported data
       await updateGroup(groupId, {
         players,
@@ -215,9 +215,9 @@ export const Settings: React.FC = () => {
         mmrMatches
       });
 
-      toast({ 
-        title: 'Success', 
-        description: `Data imported successfully into group "${groupNameForImport}"!` 
+      toast({
+        title: 'Success',
+        description: `Data imported successfully into group "${groupNameForImport}"!`
       });
 
       // Clear form
@@ -225,10 +225,10 @@ export const Settings: React.FC = () => {
       setGroupNameForImport('Imported Data Group');
     } catch (error) {
       console.error('Error importing data:', error);
-      toast({ 
-        title: 'Error', 
+      toast({
+        title: 'Error',
         description: 'Failed to import data. Please check the data format.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     } finally {
       setImporting(false);
@@ -271,9 +271,9 @@ export const Settings: React.FC = () => {
                 <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex-shrink-0">
                     {user.photoURL ? (
-                      <img 
-                        src={user.photoURL} 
-                        alt="Profile" 
+                      <img
+                        src={user.photoURL}
+                        alt="Profile"
                         className="w-10 h-10 rounded-full border-2 border-green-300"
                       />
                     ) : (
@@ -291,10 +291,10 @@ export const Settings: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
-                <Button 
+
+                <Button
                   onClick={handleSignOut}
-                  variant="outline" 
+                  variant="outline"
                   className="gap-2"
                 >
                   <LogOut className="h-4 w-4" />
@@ -316,8 +316,8 @@ export const Settings: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
-                <Button 
+
+                <Button
                   onClick={handleGoogleSignIn}
                   disabled={signingIn}
                   className="gap-2 bg-blue-600 hover:bg-blue-700"
@@ -339,71 +339,6 @@ export const Settings: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Export Current Group Data */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              Export Current Group Data
-            </CardTitle>
-            <CardDescription>
-              Download your current group's data as a backup file
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {currentGroup ? (
-              <div className="space-y-4">
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="font-medium">Current Group: {currentGroup.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {currentGroup.players.length} players • {currentGroup.tournaments.length} tournaments • {currentGroup.mmrMatches.length} MMR matches
-                  </p>
-                </div>
-                <Button onClick={exportCurrentGroupData} className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Export Group Data
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No group selected. Please select or create a group first.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Export Legacy Data */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              Export Legacy Data
-            </CardTitle>
-            <CardDescription>
-              Export data stored in your browser's local storage from older versions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-amber-800">Legacy Data Migration</p>
-                  <p className="text-amber-700">
-                    This will export any tournament and player data stored in your browser from previous versions of TTTracker.
-                  </p>
-                </div>
-              </div>
-              <Button onClick={exportLegacyData} variant="outline" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export Legacy Data
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Separator className="my-6" />
 
         {/* Version Info */}
         <Card className="mb-6">
@@ -450,6 +385,40 @@ export const Settings: React.FC = () => {
 
         <Separator className="my-6" />
 
+        {/* Export Current Group Data */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Export Current Group Data
+            </CardTitle>
+            <CardDescription>
+              Download your current group's data as a backup file
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {currentGroup ? (
+              <div className="space-y-4">
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="font-medium">Current Group: {currentGroup.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {currentGroup.players.length} players • {currentGroup.tournaments.length} tournaments • {currentGroup.mmrMatches.length} MMR matches
+                  </p>
+                </div>
+                <Button onClick={exportCurrentGroupData} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export Group Data
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No group selected. Please select or create a group first.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Import Data */}
         <Card>
           <CardHeader>
@@ -471,7 +440,7 @@ export const Settings: React.FC = () => {
                 placeholder="Enter name for the new group"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="import-data">Paste Export Data</Label>
               <Textarea
@@ -489,16 +458,16 @@ export const Settings: React.FC = () => {
               <div className="text-sm">
                 <p className="font-medium text-blue-800">How to Import</p>
                 <p className="text-blue-700">
-                  1. Export your data from another device or backup<br/>
-                  2. Copy the JSON content from the exported file<br/>
-                  3. Paste it in the text area above<br/>
-                  4. Enter a name for the new group<br/>
+                  1. Export your data from another device or backup<br />
+                  2. Copy the JSON content from the exported file<br />
+                  3. Paste it in the text area above<br />
+                  4. Enter a name for the new group<br />
                   5. Click Import Data
                 </p>
               </div>
             </div>
 
-            <Button 
+            <Button
               onClick={importDataToGroup}
               disabled={importing || !importData.trim() || !groupNameForImport.trim()}
               className="gap-2"

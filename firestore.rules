@@ -31,7 +31,6 @@ service cloud.firestore {
       // Only authenticated users can create groups
       allow create: if isAuthenticated() && 
         request.auth.uid == request.data.createdBy &&
-        request.data.keys().hasAll(['name', 'createdBy', 'createdAt', 'members']) &&
         request.data.members.size() >= 1 &&
         request.auth.uid in request.data.members;
       

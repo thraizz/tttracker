@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { GroupSwitcherModal } from "@/components/GroupSwitcherModal";
+import { Footer } from "@/components/Footer";
 import { Player, Tournament, MMRMatch, Group } from "@/types/tournament";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -193,7 +194,7 @@ export const AppLayout = ({
 
       {/* Status Bar */}
       {currentGroup && (
-        <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container max-w-7xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-6">
@@ -229,8 +230,10 @@ export const AppLayout = ({
               </div>
             </div>
           </div>
-        </footer>
+        </div>
       )}
+      
+      <Footer />
     </div>
   );
 };

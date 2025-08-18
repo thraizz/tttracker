@@ -9,6 +9,7 @@ import { getGroupInvite, consumeGroupInvite, getGroup } from '@/services/groupSe
 import { GroupInvite, Group } from '@/types/tournament';
 import { Users, Calendar, Clock, RefreshCw, AlertTriangle } from 'lucide-react';
 import { JoinGroupModal } from '@/components/JoinGroupModal';
+import { Footer } from '@/components/Footer';
 import { AuthenticationError } from '@/types/errors';
 
 export const JoinGroup: React.FC = () => {
@@ -332,6 +333,8 @@ export const JoinGroup: React.FC = () => {
         onJoin={handleJoinGroup}
         groupName={group.name}
       />
+      
+      <Footer />
     </div>
   );
 };

@@ -21,6 +21,7 @@ import { useGroup } from "@/contexts/GroupContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLegacyDataMigration } from "@/hooks/useLegacyDataMigration";
 import { LegacyDataMigrationDialog } from "@/components/LegacyDataMigrationDialog";
+import { Footer } from "@/components/Footer";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -388,6 +389,8 @@ const Home = () => {
           onDismiss={markMigrationDismissed}
         />
       </div>
+      
+      <Footer />
     </div>
   );
 };
