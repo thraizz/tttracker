@@ -29,9 +29,8 @@ Thank you for your interest in contributing to TTTracker! We welcome contributio
 ## 🛠️ Development Workflow
 
 ### Important Development Notes
-- **NEVER start the development server** (`npm run dev`) for testing - use build commands only
+- Use `npm run dev` for the development server
 - Use `npm run build` for production builds
-- Use `npm run build:dev` for development builds
 - Run `npm run lint` to check code style
 - Run `npm run typecheck` to verify TypeScript
 
