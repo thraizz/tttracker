@@ -178,75 +178,80 @@ export const MMRModeContent = ({ players, onUpdatePlayers, mmrMatches, onAddMatc
               </div>
             ) : (
               <div className="space-y-4">
-                {recentMatches.map((match) => (
-                  <div key={match.id} className="flex flex-col-reverse md:flex-row gap-4 items-center justify-between p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="text-center">
-                        <div className="font-semibold">{match.player1.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {match.mmrChange.player1Change > 0 ? (
-                            <span className="text-green-600 flex items-center gap-1">
-                              <TrendingUp className="w-3 h-3" />
-                              +{match.mmrChange.player1Change}
-                            </span>
-                          ) : (
-                            <span className="text-red-600 flex items-center gap-1">
-                              <TrendingDown className="w-3 h-3" />
-                              {match.mmrChange.player1Change}
-                            </span>
+                {recentMatches.map((match) => {
+                  const is2v2 = match.matchType === '2v2' && match.team1Players && match.team2Players;
+                  const MmrChange = ({ change }: { change: number }) => (
+                    change > 0
+                      ? <span className="text-green-600 flex items-center gap-1"><TrendingUp className="w-3 h-3" />+{change}</span>
+                      : <span className="text-red-600 flex items-center gap-1"><TrendingDown className="w-3 h-3" />{change}</span>
+                  );
+
+                  return (
+                    <div key={match.id} className="flex flex-col-reverse md:flex-row gap-4 items-center justify-between p-4 bg-muted/30 rounded-lg">
+                      {is2v2 ? (
+                        <div className="flex items-center gap-4 flex-1">
+                          {/* Team 1 */}
+                          <div className="text-center space-y-1">
+                            {match.team1Players!.map((p, i) => (
+                              <div key={p.id}>
+                                <div className="font-semibold text-sm">{p.name}</div>
+                                <div className="text-xs"><MmrChange change={match.team1MmrChange!.changes[i]} /></div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="text-center px-4">
+                            <div className="font-bold text-lg">{match.score.player1Score} - {match.score.player2Score}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(match.completedAt).toLocaleTimeString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            <Badge variant="outline" className="text-xs mt-1">2v2</Badge>
+                          </div>
+                          {/* Team 2 */}
+                          <div className="text-center space-y-1">
+                            {match.team2Players!.map((p, i) => (
+                              <div key={p.id}>
+                                <div className="font-semibold text-sm">{p.name}</div>
+                                <div className="text-xs"><MmrChange change={match.team2MmrChange!.changes[i]} /></div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="text-center">
+                            <div className="font-semibold">{match.player1.name}</div>
+                            <div className="text-sm text-muted-foreground"><MmrChange change={match.mmrChange.player1Change} /></div>
+                          </div>
+                          <div className="text-center px-4">
+                            <div className="font-bold text-lg">{match.score.player1Score} - {match.score.player2Score}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(match.completedAt).toLocaleTimeString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-semibold">{match.player2.name}</div>
+                            <div className="text-sm text-muted-foreground"><MmrChange change={match.mmrChange.player2Change} /></div>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-fit">
+                        <Badge variant={match.winnerTeam === 1 || match.winner.id === match.player1.id ? "default" : "secondary"}>
+                          {is2v2 ? `Team ${match.winnerTeam} wins` : `${match.winner.name} wins`}
+                        </Badge>
+                        <div className="flex gap-1">
+                          {!is2v2 && (
+                            <Button size="sm" variant="outline" onClick={() => setEditingMatch(match)} className="h-8 w-8 p-0">
+                              <Edit className="w-3 h-3" />
+                            </Button>
                           )}
-                        </div>
-                      </div>
-                      <div className="text-center px-4">
-                        <div className="font-bold text-lg">
-                          {match.score.player1Score} - {match.score.player2Score}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(match.completedAt).toLocaleTimeString('en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold">{match.player2.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {match.mmrChange.player2Change > 0 ? (
-                            <span className="text-green-600 flex items-center gap-1">
-                              <TrendingUp className="w-3 h-3" />
-                              +{match.mmrChange.player2Change}
-                            </span>
-                          ) : (
-                            <span className="text-red-600 flex items-center gap-1">
-                              <TrendingDown className="w-3 h-3" />
-                              {match.mmrChange.player2Change}
-                            </span>
-                          )}
+                          <Button size="sm" variant="outline" onClick={() => onDeleteMatch(match.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive">
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between md:justify-end gap-2 w-full md:w-fit">
-                      <Badge variant={match.winner.id === match.player1.id ? "default" : "secondary"}>
-                        {match.winner.name} wins
-                      </Badge>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditingMatch(match)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onDeleteMatch(match.id)}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>

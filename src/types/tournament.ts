@@ -41,6 +41,7 @@ export interface Tournament {
 
 export interface MMRMatch {
   id: string;
+  matchType?: '1v1' | '2v2';
   player1: Player;
   player2: Player;
   winner: Player;
@@ -54,6 +55,12 @@ export interface MMRMatch {
     player1NewMmr: number;
     player2NewMmr: number;
   };
+  // 2v2 only
+  team1Players?: [Player, Player];
+  team2Players?: [Player, Player];
+  winnerTeam?: 1 | 2;
+  team1MmrChange?: { changes: [number, number]; newMmrs: [number, number] };
+  team2MmrChange?: { changes: [number, number]; newMmrs: [number, number] };
   completedAt: Date;
   groupId?: string;
 }

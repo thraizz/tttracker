@@ -122,40 +122,52 @@ const MMR = () => {
     if (!currentGroup) return;
 
     try {
-      // Find the match to delete
       const matchToDelete = mmrMatches.find(m => m.id === matchId);
       if (!matchToDelete) return;
 
-      // Revert the MMR changes
-      const revertedPlayers = players.map(player => {
-        if (player.id === matchToDelete.player1.id) {
-          return {
-            ...player,
-            mmr: player.mmr - matchToDelete.mmrChange.player1Change,
-            wins: matchToDelete.winner.id === player.id ? player.wins - 1 : player.wins,
-            losses: matchToDelete.winner.id !== player.id ? player.losses - 1 : player.losses
-          };
-        }
-        if (player.id === matchToDelete.player2.id) {
-          return {
-            ...player,
-            mmr: player.mmr - matchToDelete.mmrChange.player2Change,
-            wins: matchToDelete.winner.id === player.id ? player.wins - 1 : player.wins,
-            losses: matchToDelete.winner.id !== player.id ? player.losses - 1 : player.losses
-          };
-        }
-        return player;
-      });
+      let revertedPlayers;
 
-      // Remove the match from the array
+      if (matchToDelete.matchType === '2v2' && matchToDelete.team1Players && matchToDelete.team2Players && matchToDelete.team1MmrChange && matchToDelete.team2MmrChange) {
+        const revertMap: Record<string, { change: number; won: boolean }> = {
+          [matchToDelete.team1Players[0].id]: { change: matchToDelete.team1MmrChange.changes[0], won: matchToDelete.winnerTeam === 1 },
+          [matchToDelete.team1Players[1].id]: { change: matchToDelete.team1MmrChange.changes[1], won: matchToDelete.winnerTeam === 1 },
+          [matchToDelete.team2Players[0].id]: { change: matchToDelete.team2MmrChange.changes[0], won: matchToDelete.winnerTeam === 2 },
+          [matchToDelete.team2Players[1].id]: { change: matchToDelete.team2MmrChange.changes[1], won: matchToDelete.winnerTeam === 2 },
+        };
+        revertedPlayers = players.map(player => {
+          const entry = revertMap[player.id];
+          if (!entry) return player;
+          return {
+            ...player,
+            mmr: player.mmr - entry.change,
+            wins: entry.won ? player.wins - 1 : player.wins,
+            losses: entry.won ? player.losses : player.losses - 1,
+          };
+        });
+      } else {
+        revertedPlayers = players.map(player => {
+          if (player.id === matchToDelete.player1.id) {
+            return {
+              ...player,
+              mmr: player.mmr - matchToDelete.mmrChange.player1Change,
+              wins: matchToDelete.winner.id === player.id ? player.wins - 1 : player.wins,
+              losses: matchToDelete.winner.id !== player.id ? player.losses - 1 : player.losses
+            };
+          }
+          if (player.id === matchToDelete.player2.id) {
+            return {
+              ...player,
+              mmr: player.mmr - matchToDelete.mmrChange.player2Change,
+              wins: matchToDelete.winner.id === player.id ? player.wins - 1 : player.wins,
+              losses: matchToDelete.winner.id !== player.id ? player.losses - 1 : player.losses
+            };
+          }
+          return player;
+        });
+      }
+
       const updatedMatches = mmrMatches.filter(match => match.id !== matchId);
-
-      // Update group
-      await updateGroup(currentGroup.id, {
-        players: revertedPlayers,
-        mmrMatches: updatedMatches
-      });
-
+      await updateGroup(currentGroup.id, { players: revertedPlayers, mmrMatches: updatedMatches });
       setPlayers(revertedPlayers);
       setMmrMatches(updatedMatches);
     } catch (error) {
