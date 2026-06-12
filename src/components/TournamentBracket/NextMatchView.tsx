@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy } from "lucide-react";
+import { Trophy, XCircle } from "lucide-react";
 import { Match, Tournament } from "@/types/tournament";
 import TournamentGraph from "@/components/TournamentGraph";
 
@@ -8,10 +8,11 @@ interface NextMatchViewProps {
   tournament: Tournament;
   nextMatch: Match;
   onReset: () => void;
+  onCancel: () => void;
   onProceedToMatch: () => void;
 }
 
-export const NextMatchView = ({ tournament, nextMatch, onReset, onProceedToMatch }: NextMatchViewProps) => {
+export const NextMatchView = ({ tournament, nextMatch, onReset, onCancel, onProceedToMatch }: NextMatchViewProps) => {
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -32,7 +33,7 @@ export const NextMatchView = ({ tournament, nextMatch, onReset, onProceedToMatch
       </div>
 
       {/* Navigation Buttons */}
-      <div className="text-center space-x-4">
+      <div className="flex items-center justify-center gap-4 flex-wrap">
         <Button
           onClick={onProceedToMatch}
           size="lg"
@@ -40,6 +41,15 @@ export const NextMatchView = ({ tournament, nextMatch, onReset, onProceedToMatch
         >
           <Trophy className="w-5 h-5 mr-2" />
           Proceed to Match
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={onCancel}
+          className="border-destructive/40 text-destructive hover:bg-destructive/10 px-8"
+        >
+          <XCircle className="w-5 h-5 mr-2" />
+          Cancel Tournament
         </Button>
       </div>
     </div>

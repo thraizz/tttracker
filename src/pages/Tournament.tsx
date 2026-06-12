@@ -107,6 +107,19 @@ const Tournament = () => {
     }
   };
 
+  const cancelTournament = async () => {
+    if (!currentGroup || !currentTournament) return;
+
+    try {
+      const updatedTournaments = currentGroup.tournaments.filter(t => t.id !== currentTournament.id);
+      await updateGroup(currentGroup.id, { tournaments: updatedTournaments });
+      setCurrentTournament(null);
+      setView('setup');
+    } catch (error) {
+      console.error('Failed to cancel tournament:', error);
+    }
+  };
+
   // Create sidebar content
   const sidebarContent = (
     <PlayerSidebar
@@ -131,6 +144,7 @@ const Tournament = () => {
           tournament={currentTournament}
           onUpdateTournament={setCurrentTournament}
           onReset={resetTournament}
+          onCancel={cancelTournament}
         />
       </AppLayout>
     );

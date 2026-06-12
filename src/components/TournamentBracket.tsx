@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Trophy } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Trophy, XCircle } from "lucide-react";
 import { Tournament, Match, Player } from "@/types/tournament";
 import { NextMatchView } from "./TournamentBracket/NextMatchView";
 import { TournamentWinner } from "./TournamentBracket/TournamentWinner";
@@ -11,11 +12,13 @@ interface TournamentBracketProps {
   tournament: Tournament;
   onUpdateTournament: (tournament: Tournament) => void;
   onReset: () => void;
+  onCancel: () => void;
 }
 
-const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: TournamentBracketProps) => {
+const TournamentBracket = ({ tournament, onUpdateTournament, onReset, onCancel }: TournamentBracketProps) => {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [currentView, setCurrentView] = useState<'next-match' | 'pending-matches'>(tournament.currentView || 'next-match');
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // Find the next available match to be played
   const getNextMatch = (): Match | null => {
@@ -122,12 +125,16 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
   // Show next match view with graph and next match info
   if (currentView === 'next-match' && tournament.status === 'active' && nextMatch) {
     return (
-      <NextMatchView
-        tournament={tournament}
-        nextMatch={nextMatch}
-        onReset={onReset}
-        onProceedToMatch={() => setCurrentView('pending-matches')}
-      />
+      <>
+        <NextMatchView
+          tournament={tournament}
+          nextMatch={nextMatch}
+          onReset={onReset}
+          onCancel={() => setShowCancelConfirm(true)}
+          onProceedToMatch={() => setCurrentView('pending-matches')}
+        />
+        {showCancelConfirm && <CancelConfirmDialog onConfirm={onCancel} onClose={() => setShowCancelConfirm(false)} />}
+      </>
     );
   }
 
@@ -135,7 +142,7 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
     <div className="space-y-8">
       {/* View Navigation */}
       {tournament.status === 'active' && nextMatch && (
-        <div className="text-center">
+        <div className="flex items-center justify-center gap-3 flex-wrap">
           <Button
             variant="outline"
             onClick={() => setCurrentView('next-match')}
@@ -143,6 +150,14 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
           >
             <Trophy className="w-4 h-4 mr-2" />
             View Next Match & Tournament Graph
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowCancelConfirm(true)}
+            className="border-destructive/40 text-destructive hover:bg-destructive/10"
+          >
+            <XCircle className="w-4 h-4 mr-2" />
+            Cancel Tournament
           </Button>
         </div>
       )}
@@ -162,8 +177,33 @@ const TournamentBracket = ({ tournament, onUpdateTournament, onReset }: Tourname
         onClose={() => setSelectedMatch(null)}
         onSubmitScore={handleSubmitScore}
       />
+
+      {showCancelConfirm && <CancelConfirmDialog onConfirm={onCancel} onClose={() => setShowCancelConfirm(false)} />}
     </div>
   );
 };
+
+const CancelConfirmDialog = ({ onConfirm, onClose }: { onConfirm: () => void; onClose: () => void }) => (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <Card className="w-full max-w-sm p-6 space-y-4">
+      <div className="flex items-center gap-3">
+        <XCircle className="w-5 h-5 text-destructive" />
+        <h3 className="text-lg font-semibold">Cancel Tournament?</h3>
+      </div>
+      <p className="text-muted-foreground text-sm">
+        All match results will be discarded and the tournament removed. This cannot be undone.
+      </p>
+      <div className="flex gap-3">
+        <Button variant="outline" onClick={onClose} className="flex-1">Keep Playing</Button>
+        <Button
+          onClick={onConfirm}
+          className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+        >
+          Discard & Cancel
+        </Button>
+      </div>
+    </Card>
+  </div>
+);
 
 export default TournamentBracket;
