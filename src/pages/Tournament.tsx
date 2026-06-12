@@ -5,6 +5,7 @@ import { Plus, Trophy } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { PlayerSidebar } from "@/components/PlayerSidebar";
 import TournamentBracket from "@/components/TournamentBracket";
+import { TournamentPlayerSelectModal } from "@/components/TournamentPlayerSelectModal";
 import { Player, Tournament as TournamentType, MMRMatch } from "@/types/tournament";
 import { useGroup } from "@/contexts/GroupContext";
 import { updateGroup } from "@/services/groupService";
@@ -16,6 +17,7 @@ const Tournament = () => {
   const [currentTournament, setCurrentTournament] = useState<TournamentType | null>(null);
   const [view, setView] = useState<'setup' | 'tournament'>('setup');
   const [mmrMatches, setMmrMatches] = useState<MMRMatch[]>([]);
+  const [showPlayerSelect, setShowPlayerSelect] = useState(false);
 
   // Load data from current group
   useEffect(() => {
@@ -65,13 +67,14 @@ const Tournament = () => {
     }
   };
 
-  const startTournament = async () => {
-    if (players.length < 2 || !currentGroup) return;
+  const startTournament = async (selectedPlayers: Player[]) => {
+    if (selectedPlayers.length < 2 || !currentGroup) return;
+    setShowPlayerSelect(false);
 
-    const matches = generateMatches(players);
+    const matches = generateMatches(selectedPlayers);
     const tournament: TournamentType = {
       id: Date.now().toString(),
-      players,
+      players: selectedPlayers,
       matches,
       status: 'active',
       createdAt: new Date(),
@@ -154,7 +157,7 @@ const Tournament = () => {
               {players.length} players registered. Create a single-elimination bracket!
             </p>
             <Button
-              onClick={startTournament}
+              onClick={() => setShowPlayerSelect(true)}
               size="lg"
               className="bg-gradient-to-r from-table-green to-secondary hover:from-table-green/90 hover:to-secondary/90 text-white font-semibold px-8 py-3 text-lg"
             >
@@ -178,6 +181,13 @@ const Tournament = () => {
       sidebarContent={sidebarContent}
     >
       {renderMainContent()}
+      {showPlayerSelect && (
+        <TournamentPlayerSelectModal
+          players={players}
+          onConfirm={startTournament}
+          onClose={() => setShowPlayerSelect(false)}
+        />
+      )}
     </AppLayout>
   );
 };
